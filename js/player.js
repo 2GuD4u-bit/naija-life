@@ -9,7 +9,20 @@ if(G.world.nearBuilding(s.x,s.y))G.ui.nearby=G.world.nearBuilding(s.x,s.y);else 
 interact:function(){let s=G.state;if(!s||s.inside)return;if(s.vehicle){s.vehicle=null;G.toast('You parked and stepped out.');return}let b=G.world.nearBuilding(s.x,s.y);if(b){s.inside=b.id;G.openBuilding(b);return}let n=G.world.npcs.find(n=>Math.hypot(n.x-s.x,n.y-s.y)<57);if(n){G.openPerson(n);return}G.toast('Nothing nearby to interact with.');},
 enterCar:function(){let s=G.state;if(!s||s.inside)return;if(s.vehicle){s.vehicle=null;G.toast('You left the vehicle.');return}let c=G.world.cars.find(c=>Math.hypot(c.x-s.x,c.y-s.y)<62);if(!c){G.toast('Move closer to a vehicle first.');return}if(!c.owned&&!c.taxi){s.wanted=Math.min(3,s.wanted+1);G.missionEvent('crime');G.toast('You took an unattended car. Police may come looking.')}s.vehicle=c;s.driving=Math.min(100,s.driving+1);G.toast('Driving: '+c.name+' · use WASD, F to exit.');},
 crime:function(){let s=G.state,n=G.world.npcs.find(n=>Math.hypot(n.x-s.x,n.y-s.y)<50);if(!n){G.toast('No one close enough.');return}if(s.crimeCooldown>0){G.toast('Give it a moment before causing more trouble.');return}s.cash+=1500;s.wanted=Math.min(3,s.wanted+1);s.crimeCooldown=15;n.react=10;s.reputation=Math.max(-20,s.reputation-2);G.missionEvent('crime');G.toast('You grabbed ₦1,500. Wanted level increased!');}};
-function blocked(x,y){if(x<20||x>G.W-20||y<20||y>G.H-20)return true;if(x>1715&&y>340&&y<1570)return true;return G.world.buildings.some(b=>x>b.x-11&&x<b.x+b.w+11&&y>b.y-13&&y<b.y+b.h+9)}
+function blocked(x,y){
+ if(x<20||x>G.W-20||y<20||y>G.H-20)return true;
+ if(x>1715&&y>340&&y<1570)return true;
+ const lot=G.world.carDealership&&G.world.carDealership.lot;
+ if(lot){
+  const cx=lot.x+lot.w/2;
+  if(x>=lot.x-7&&x<=lot.x+7&&y>lot.y+7&&y<lot.y+lot.h-7)return true;
+  if(x>=lot.x+lot.w-7&&x<=lot.x+lot.w+7&&y>lot.y+7&&y<lot.y+lot.h-7)return true;
+  if(y>=lot.y+lot.h-7&&y<=lot.y+lot.h+7&&x>lot.x+7&&x<lot.x+lot.w-7)return true;
+  if(y>=lot.y-7&&y<=lot.y+7&&Math.abs(x-cx)>lot.gateWidth/2)return true;
+ }
+ if(G.world.carDealership&&G.world.carDealership.cars.some(c=>!c.interior&&Math.abs(x-c.x)<26&&Math.abs(y-c.y)<15))return true;
+ return G.world.buildings.some(b=>x>b.x-11&&x<b.x+b.w+11&&y>b.y-13&&y<b.y+b.h+9);
+}
 function keyName(e){return e&&typeof e.key==='string'&&e.key?e.key.toLowerCase():''}
 function isTextEntry(target){return !!(target&&target.closest&&target.closest('input,textarea,select,[contenteditable="true"]'))}
 function keydown(e){let k=keyName(e);if(!k||e.isComposing||isTextEntry(e.target))return;if(!document.getElementById('start-screen').classList.contains('hide'))return;if(['arrowup','arrowdown','arrowleft','arrowright',' '].includes(k))e.preventDefault();if(G.ui.panel&&k!=='escape')return;keys[k]=true;if(e.repeat)return;if(k==='e')Player.interact();if(k==='f')Player.enterCar();if(k==='g')Player.crime();if(k==='escape'){if(G.ui.panel)G.closePanel();else if(G.state&&G.state.inside)G.state.inside=null}}
