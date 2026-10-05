@@ -1,0 +1,29 @@
+services:
+  - type: web
+    name: naija-life-2gud4u-bit-api
+    runtime: node
+    plan: starter
+    region: frankfurt
+    rootDir: backend
+    buildCommand: node --version
+    startCommand: node server.js
+    healthCheckPath: /healthz
+    disk:
+      name: naija-life-account-data
+      mountPath: /var/data
+      sizeGB: 1
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: NODE_VERSION
+        value: 24.11.1
+      - key: DB_PATH
+        value: /var/data/naija-life.sqlite
+      - key: FRONTEND_ORIGIN
+        value: https://2gud4u-bit.github.io
+      - key: FRONTEND_URL
+        value: https://2gud4u-bit.github.io/naija-life
+      - key: PAYMENT_SANDBOX
+        value: "true"
+      - key: LIVE_PAYMENTS_ENABLED
+        value: "false"

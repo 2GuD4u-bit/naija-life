@@ -44,10 +44,11 @@ The entry screen uses the existing Node.js + built-in SQLite account service. It
 
 GitHub Pages does not run `backend/server.js`. To enable real registration and sign-in on the public site, deploy the `backend` service to an HTTPS Node.js 24+ host with durable storage for its SQLite database, then:
 
-1. Set `FRONTEND_ORIGIN=https://2gud4u-bit.github.io` and `FRONTEND_URL=https://2gud4u-bit.github.io/naija-life` on the backend.
-2. Set the public, non-secret HTTPS backend origin in the `window.NAIJA_API_BASE` assignment in `index.html` (for example, `https://your-api-host.example`). This value is public; never put server keys there.
-3. Copy `backend/.env.example` to the backend's private environment. For real password recovery, set `RESEND_API_KEY` and `RESET_EMAIL_FROM`; verify that sender domain with Resend. The API key remains secret on the server.
-4. Use a persistent database volume and HTTPS. Cross-origin cookie sessions require the exact CORS origin and secure cookies. Browser privacy settings that block third-party cookies may require hosting the API on a same-site custom domain.
+The repository now includes a Render Blueprint at `render.yaml`. Click the deployment link in this README, choose the `naija-life` repository, review the service and storage charge, then apply it. It creates an always-on Node.js 24 service in Frankfurt, an HTTPS health check, and a 1 GB persistent disk for the SQLite account database. The API's expected public URL is `https://naija-life-2gud4u-bit-api.onrender.com`; the GitHub Pages build is configured to use it. Render's current Starter compute rate is $7/month and persistent SSD storage is $0.25/GB/month, so the initial configured resource is about $7.25/month before any extra bandwidth. Render shows the charge before you apply the Blueprint.
+
+The Blueprint sets the exact Pages CORS origin, production cookie settings, database path, and password-reset return URL. It deliberately keeps live payments disabled. Password reset email remains unavailable until a verified sender and server-only Resend key are configured. Cross-site session cookies can be blocked by some browser privacy settings; a same-site custom domain may be needed for those browsers.
+
+Never put payment, mail, or other server keys in `index.html` or GitHub Pages.
 
 Do not enable live purchases until the separately documented payment checks and provider configuration are complete. The starter Terms and Privacy pages are project drafts and require operator/legal review before a public commercial launch.
 
@@ -56,6 +57,8 @@ This is a single-player browser prototype. NPCs use simple wandering, traffic us
 ## Publish a shareable link with GitHub Pages
 
 This folder includes a GitHub Actions workflow that deploys the site whenever code is pushed to the repository's `main` branch.
+
+[Deploy the account API to Render](https://render.com/deploy?repo=https://github.com/2GuD4u-bit/naija-life)
 
 1. Create a GitHub repository named `naija-life` (a public repository works with GitHub Free).
 2. Upload the contents of this folder to the repository root, including `.github/workflows/pages.yml` and `.nojekyll`.
