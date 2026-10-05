@@ -82,7 +82,7 @@ function completePayment(payment,amountPaid,verification){
   }catch(e){db.exec('ROLLBACK');throw e}
 }
 const ECONOMY_COSTS={eat:900,date:1500,business:30000,businessupgrade:5000,hire:3000,buybike:18000,buycar:125000,fuel:2500,repair:500,heal:2000,water:100,upgradehome:45000,gym:500,study:700,bus:300,club:1200,delivery:1200,movie:500,invest:5000,bill:600,ad:1000};
-const HOME_PRICES={'Face-me-I-face-you|Mushin':[7200,2400],'Self-contain|Yaba':[18000,6000],'Mini-flat|Lekki Phase 1':[51000,17000],'Duplex|Ikoyi':[750000,250000],'Mansion|Banana Island':[4500000,1500000],'Hall of Residence|UNILAG, Akoka':[3600,1200]};
+const HOME_PRICES={'Face-me-I-face-you|Nyanya':[7200,2400],'Self-contain|Kubwa':[18000,6000],'Mini-flat|Wuse':[51000,17000],'Duplex|Maitama':[750000,250000],'Mansion|Asokoro':[4500000,1500000],'Hall of Residence|UniAbuja, Gwagwalada':[3600,1200]};
 const MISSION_REWARDS=[800,1100,2200,1200,2600,1400,3000,1800,2500,6000];
 function economyCommand(userId,key,body){
   if(typeof key!=='string'||key.length<16||key.length>100)throw Object.assign(Error('A unique idempotency key is required.'),{status:400});
