@@ -53,7 +53,7 @@ case'office':return phoneContents('jobs');default:return `<div class="dialog">${
 phoneJobs=function(){
   const s=G.state;
   const roles=[
-    {group:'Tech',icon:'💻',pay:9900,start:'Intern',description:'From Yaba intern to CTO. Coding pushes promotions.',job:'Junior web designer',needs:10},
+    {group:'Tech',icon:'💻',pay:9900,start:'Intern',description:'From Tech Yard intern to CTO. Coding pushes promotions.',job:'Junior web designer',needs:10},
     {group:'Banking',icon:'🏦',pay:11600,start:'Marketer',description:'Hit your account-opening targets on VI. Charisma is king.',job:'Banker'},
     {group:'Music',icon:'🎤',pay:7400,start:'Backup Singer',description:'Gig your way from backup vocals to headline shows.',job:'Musician'},
     {group:'Courier',icon:'🛵',pay:2400,start:'Rider',description:'Deliver around the city and build a name for yourself.',job:'Courier'},
@@ -89,7 +89,7 @@ function phoneGovernment(tab){
 }
 function phoneHouses(){
  const s=G.state;
- const homes=[['Face-me-I-face-you','Mushin','6×6',2400,7200],['Self-contain','Yaba','7×7',6000,18000],['Mini-flat','Lekki Phase 1','10×10',17000,51000],['Duplex','Ikoyi','12×12',250000,750000],['Mansion','Banana Island','14×14',1500000,4500000],['Hall of Residence','UNILAG, Akoka','6×6',1200,3600]];
+ const homes=[['Face-me-I-face-you','Nyanya','6×6',2400,7200],['Self-contain','Kubwa','7×7',6000,18000],['Mini-flat','Wuse','10×10',17000,51000],['Duplex','Maitama','12×12',250000,750000],['Mansion','Asokoro','14×14',1500000,4500000],['Hall of Residence','UniAbuja, Gwagwalada','6×6',1200,3600]];
  return `<p class="house-intro">Found a better place? Pay the landlord and agent and your furniture moves with you.</p>${homes.map(h=>`<article class="phone-house"><div><b>${h[0]} · ${h[1]}</b><small>${h[2]}</small></div><div><small>₦${h[3].toLocaleString()}/week</small><button onclick="Game.action('movehome','${h[0]}|${h[1]}|${h[3]}|${h[4]}')">Move in ₦${h[4].toLocaleString()}</button></div></article>`).join('')}`;
 }
 
