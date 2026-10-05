@@ -3,7 +3,7 @@ const G=window.Game;
 const SX=.74,SY=.38;
 const shade=(hex,factor)=>{let c=hex.replace('#','');if(c.length===3)c=c.split('').map(x=>x+x).join('');let n=parseInt(c,16),r=Math.max(0,Math.min(255,Math.round((n>>16)*factor))),g=Math.max(0,Math.min(255,Math.round(((n>>8)&255)*factor))),b=Math.max(0,Math.min(255,Math.round((n&255)*factor)));return `rgb(${r},${g},${b})`};
 G.world.draw3D=function(ctx,scale,dpr,w,h){
- const s=G.state,px=(x,y,z=0)=>[w/2+((x-s.x)-(y-s.y))*SX*scale,h/2+((x-s.x)+(y-s.y))*SY*scale-z*scale];
+ const s=G.state,px=(x,y,z=0)=>[w/2+((x-s.x)-(y-s.y))*SX*scale+(G.view.panX||0),h/2+((x-s.x)+(y-s.y))*SY*scale-z*scale+(G.view.panY||0)];
  const poly=(points,fill,stroke)=>{ctx.beginPath();points.forEach((p,i)=>{let q=px(p[0],p[1],p[2]||0);i?ctx.lineTo(q[0],q[1]):ctx.moveTo(q[0],q[1])});ctx.closePath();ctx.fillStyle=fill;ctx.fill();if(stroke){ctx.strokeStyle=stroke;ctx.lineWidth=1.2;ctx.stroke()}};
  const polygon2=(points,fill)=>{ctx.beginPath();points.forEach((p,i)=>i?ctx.lineTo(p[0],p[1]):ctx.moveTo(p[0],p[1]));ctx.closePath();ctx.fillStyle=fill;ctx.fill()};
  ctx.save();ctx.setTransform(dpr,0,0,dpr,0,0);ctx.fillStyle='#a9bf91';ctx.fillRect(0,0,w,h);ctx.restore();
