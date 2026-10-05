@@ -38,6 +38,19 @@ The backend includes server-priced purchase requests, Paystack bank-transfer and
 
 **Live purchases are disabled by default.** No package prices, provider keys, or hosted HTTPS backend have been configured. The database is a local SQLite development store; production needs durable hosting, backups, account recovery, and payment reconciliation. GitHub Pages can host the static preview but cannot run provider verification or keep secrets, so a payment-enabled public build needs a backend host.
 
+### Account system and deployment
+
+The entry screen uses the existing Node.js + built-in SQLite account service. It supports email and unique username, salted `scrypt` password hashes, 14-day HTTP-only sessions, logout, an account profile/avatar record, per-account browser save keys, and single-use 30-minute reset tokens. Reset email is sent through Resend from the server. Account actions never fall back to a client-only success state.
+
+GitHub Pages does not run `backend/server.js`. To enable real registration and sign-in on the public site, deploy the `backend` service to an HTTPS Node.js 24+ host with durable storage for its SQLite database, then:
+
+1. Set `FRONTEND_ORIGIN=https://2gud4u-bit.github.io` and `FRONTEND_URL=https://2gud4u-bit.github.io/naija-life` on the backend.
+2. Set the public, non-secret HTTPS backend origin in the `window.NAIJA_API_BASE` assignment in `index.html` (for example, `https://your-api-host.example`). This value is public; never put server keys there.
+3. Copy `backend/.env.example` to the backend's private environment. For real password recovery, set `RESEND_API_KEY` and `RESET_EMAIL_FROM`; verify that sender domain with Resend. The API key remains secret on the server.
+4. Use a persistent database volume and HTTPS. Cross-origin cookie sessions require the exact CORS origin and secure cookies. Browser privacy settings that block third-party cookies may require hosting the API on a same-site custom domain.
+
+Do not enable live purchases until the separately documented payment checks and provider configuration are complete. The starter Terms and Privacy pages are project drafts and require operator/legal review before a public commercial launch.
+
 This is a single-player browser prototype. NPCs use simple wandering, traffic uses a simple loop, and visuals use original canvas drawing and emoji placeholders.
 
 ## Publish a shareable link with GitHub Pages
