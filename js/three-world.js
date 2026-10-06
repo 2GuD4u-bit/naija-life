@@ -1,21 +1,30 @@
-import * as THREE from 'https://cdn.jsdelivr.net/npm/three@0.186.0/build/three.module.js';
+let THREE=null;
 
 const clamp=(n,a,b)=>Math.max(a,Math.min(b,n));
 const color=(v,alt='#b78f68')=>{try{return new THREE.Color(v||alt)}catch{return new THREE.Color(alt)}};
 
-export function createCity3D(G){
+export async function createCity3D(G,diagnostic=()=>{}){
+ diagnostic('three-world-initializing',{module:import.meta.url});
+ diagnostic('three-import-start',{module:'./vendor/three.module.js'});
+ THREE=await import('./vendor/three.module.js?v=20261006-three-renderer-r2');
+ diagnostic('three-import-ready',{revision:THREE.REVISION});
  const source=document.getElementById('world');
- if(!source||!window.WebGLRenderingContext)throw new Error('WebGL is unavailable.');
+ if(!source||!source.parentNode)throw new Error('The game world canvas is missing or is detached from the page.');
+ const probe=document.createElement('canvas'),webgl2=probe.getContext('webgl2'),webgl1=webgl2?null:(probe.getContext('webgl')||probe.getContext('experimental-webgl'));
+ if(!webgl2&&!webgl1)throw new Error('This browser did not provide a WebGL 2 or WebGL 1 context.');
+ diagnostic('webgl-capability-ready',{webgl2:!!webgl2,webgl1:!!webgl1});
  const canvas=document.createElement('canvas');canvas.className='world-webgl-canvas';canvas.setAttribute('aria-hidden','true');
  source.parentNode.insertBefore(canvas,source.nextSibling);
- const renderer=new THREE.WebGLRenderer({canvas,alpha:true,antialias:true,powerPreference:'high-performance'});
+ diagnostic('canvas-inserted',{connected:canvas.isConnected});
+ let renderer;
+ try{diagnostic('renderer-create-start',{revision:THREE.REVISION});renderer=new THREE.WebGLRenderer({canvas,alpha:true,antialias:true,powerPreference:'high-performance'});diagnostic('renderer-created',{context:renderer.getContext().constructor?.name||'WebGL'});}catch(error){canvas.remove();error.naija3dStage='WebGL renderer creation';throw error}
  renderer.setPixelRatio(Math.min(devicePixelRatio||1,1.5));renderer.setSize(innerWidth,innerHeight,false);
  renderer.outputColorSpace=THREE.SRGBColorSpace;renderer.toneMapping=THREE.ACESFilmicToneMapping;renderer.toneMappingExposure=1.15;
- const scene=new THREE.Scene();scene.background=new THREE.Color('#a8c7ad');
+ diagnostic('scene-create-start');const scene=new THREE.Scene();scene.background=new THREE.Color('#a8c7ad');diagnostic('scene-created');
  scene.fog=new THREE.Fog('#a8c7ad',800,3300);
  scene.add(new THREE.HemisphereLight('#e4f2ff','#75664e',2.15));
  const sun=new THREE.DirectionalLight('#fff0d2',3.2);sun.position.set(-500,900,350);scene.add(sun);
- const camera=new THREE.OrthographicCamera(-10,10,10,-10,.1,9000);
+ const camera=new THREE.OrthographicCamera(-10,10,10,-10,.1,9000);diagnostic('camera-created');
  camera.up.set(0,1,0);
  const materialCache=new Map(),geometryCache=new Map(),planeCache=new Map(),labelCache=new Map(),textures=[],customMaterials=[],sharedGeometry=new WeakSet(),chunks=new Map(),chunkSize=G.world.mapMeta.chunkSize||800;
  const mats={
@@ -183,6 +192,7 @@ export function createCity3D(G){
   root.userData.type='dealer';group.add(root);return root;
  }
  function architecturalAsset(parent,b){const lod=new THREE.LOD();lod.addLevel(buildingModel(b,0),0);lod.addLevel(buildingModel(b,1),500);lod.addLevel(buildingModel(b,2),1350);lod.position.set(b.x+b.w/2,terrainY(b.x,b.y),b.y+b.h/2);lod.rotation.y=Number(b.rotation)||0;lod.scale.setScalar(Number(b.scale)||1);parent.add(lod);parent.userData.buildingLods.push(lod);return lod}
+ diagnostic('procedural-world-build-start',{buildings:G.world.buildings?.length||0,chunkSize});
  G.world.assetBuilders=G.world.assetBuilders||Object.create(null);
  G.world.registerAssetBuilder=function(name,builder){if(typeof name!=='string'||!name||typeof builder!=='function')throw new TypeError('Asset builders need a name and a builder function.');G.world.assetBuilders[name]=builder;return builder};
  G.world.registerAssetBuilder('architecture',architecturalAsset);
@@ -215,7 +225,7 @@ export function createCity3D(G){
   for(const [id,o]of people)if(!activeIds.has(id)){scene.remove(o);people.delete(id)}
   for(const c of G.world.cars||[]){if(!c.id&&!c.owned&&!c.taxi&&!c.bus)continue;const id=c.id||c.name||'player-car';let o=vehicles.get(id);if(!o){o=carModel(scene,c.x,c.y,c.color,c.kind);vehicles.set(id,o)}o.position.set(c.x,terrainY(c.x,c.y),c.y)}
  }
- let visible=true,lastResize=0,lastSync=0;
+ let visible=true,lastSync=0,firstRendered=false;
  function resize(){renderer.setSize(innerWidth,innerHeight,false);camera.left=-innerWidth/2;camera.right=innerWidth/2;camera.top=innerHeight/2;camera.bottom=-innerHeight/2;camera.updateProjectionMatrix()}
  addEventListener('resize',resize);resize();
  function render(){if(!visible)return;const s=G.state;if(!s)return;const scale=(G.view.scale||1)*1.047;
@@ -235,9 +245,10 @@ export function createCity3D(G){
   if(performance.now()-lastSync>400){syncActors();lastSync=performance.now()}
   const player=s.vehicle?vehicles.get(s.vehicle.id||s.vehicle.name):null;
   if(player){player.position.set(s.x,terrainY(s.x,s.y),s.y);player.rotation.y=-(s.angle||0);player.visible=true;playerFigure.visible=false}else{playerFigure.position.set(s.x,terrainY(s.x,s.y),s.y);playerFigure.rotation.y=-(s.angle||0);playerFigure.visible=true}
-  renderer.render(scene,camera);
+  renderer.render(scene,camera);if(!firstRendered){firstRendered=true;diagnostic('first-render-complete',{drawCalls:renderer.info.render.calls,triangles:renderer.info.render.triangles,chunks:chunks.size})}
  }
  const api={ready:true,renderer,scene,camera,chunks,get stats(){return{chunks:chunks.size,buildings:G.world.buildings.length,houseLots:G.world.houseLots.length,drawCalls:renderer.info.render.calls,triangles:renderer.info.render.triangles}},render,refreshLocation,setVisible(v){visible=!!v;canvas.style.display=v?'block':'none'},dispose(){removeEventListener('resize',resize);for(const key of chunks.keys())discardChunk(key);renderer.dispose();materialCache.forEach(m=>m.dispose());customMaterials.forEach(m=>m.dispose());labelCache.forEach(t=>t.dispose());textures.forEach(t=>t.dispose());canvas.remove()}};
  G.world.threeWorld=api;
+ diagnostic('three-world-initialization-complete',{canvasConnected:canvas.isConnected,rendererRevision:THREE.REVISION});
  return api;
 }
