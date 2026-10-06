@@ -140,7 +140,7 @@ export async function createCity3D(G,diagnostic=()=>{}){
  function constructionSite(group,b){const lotW=188,lotD=152,site=new THREE.Group();site.position.set(b.x+b.w/2,terrainY(b.x,b.y),b.y+b.h/2);flat(site,0,.1,0,lotW,lotD,mat('#b58e5e'));flat(site,0,.32,0,lotW-12,lotD-12,mat('#c3a06a'));
   const fence=mat('#175968');for(const z of [-lotD/2+4,lotD/2-4])for(let x=-lotW/2+4;x<=lotW/2-4;x+=8){if(z>0&&Math.abs(x)<18)continue;box(site,x,.35,z,.65,2.4,.65,fence)}
   for(const x of [-lotW/2+4,lotW/2-4])for(let z=-lotD/2+4;z<=lotD/2-4;z+=8)box(site,x,.35,z,.65,2.4,.65,fence);
-  for(const z of [-lotD/2+4,lotD/2-4]){const gap=z>0?18:0,start=-lotW/2+7,end=lotW/2-7;for(const x=start;x<end;x+=8){if(z>0&&x>=-gap&&x<=gap)continue;box(site,x+4,1,z,8,.18,.28,mat('#3c7881'));box(site,x+4,1.8,z,8,.16,.28,mat('#568a89'))}}
+  for(const z of [-lotD/2+4,lotD/2-4]){const gap=z>0?18:0,start=-lotW/2+7,end=lotW/2-7;for(let x=start;x<end;x+=8){if(z>0&&x>=-gap&&x<=gap)continue;box(site,x+4,1,z,8,.18,.28,mat('#3c7881'));box(site,x+4,1.8,z,8,.16,.28,mat('#568a89'))}}
   for(const x of [-lotW/2+4,lotW/2-4])for(const z of [-lotD/2+8,0,lotD/2-8]){box(site,x,2.8,z,1,3,1,mat('#c7b087'));const lamp=new THREE.PointLight('#ffe2a7',18,20);lamp.position.set(x,6,z);site.add(lamp)}
   const bw=78,bd=58,floor=4.1;flat(site,0,.55,0,bw+7,bd+7,mat('#777a74'));
   for(let level=0;level<5;level++){
@@ -252,3 +252,4 @@ export async function createCity3D(G,diagnostic=()=>{}){
  diagnostic('three-world-initialization-complete',{canvasConnected:canvas.isConnected,rendererRevision:THREE.REVISION});
  return api;
 }
+
