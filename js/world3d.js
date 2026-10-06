@@ -1,5 +1,6 @@
 (function(){
 const G=window.Game;
+const scriptUrl=document.currentScript?.src||location.href;
 const SX=.74,SY=.38;
 const shade=(hex,factor)=>{let c=hex.replace('#','');if(c.length===3)c=c.split('').map(x=>x+x).join('');let n=parseInt(c,16),r=Math.max(0,Math.min(255,Math.round((n>>16)*factor))),g=Math.max(0,Math.min(255,Math.round(((n>>8)&255)*factor))),b=Math.max(0,Math.min(255,Math.round((n&255)*factor)));return `rgb(${r},${g},${b})`};
 const drawCanvasWorld=function(ctx,scale,dpr,w,h){
@@ -194,5 +195,7 @@ G.world.draw3D=function(ctx,scale,dpr,w,h){
  if(city&&city.ready){ctx.save();ctx.setTransform(dpr,0,0,dpr,0,0);ctx.clearRect(0,0,w,h);ctx.restore();city.render();return}
  return drawCanvasWorld(ctx,scale,dpr,w,h);
 };
-import('./three-world.js?v=20261006-abuja-expansion-r6').then(module=>module.createCity3D(G)).catch(error=>console.warn('WebGL city renderer unavailable; keeping the city canvas renderer.',error));
+const threeWorldUrl=new URL('./three-world.js?v=20261006-asset-paths-r1',scriptUrl);
+import(threeWorldUrl.href).then(module=>module.createCity3D(G)).catch(error=>console.warn('WebGL city renderer unavailable; keeping the city canvas renderer.',error));
 })();
+
