@@ -190,12 +190,16 @@ const drawCanvasWorld=function(ctx,scale,dpr,w,h){
  function drawVehicle(x,y,color,name,player){let p=px(x,y);ctx.save();ctx.setTransform(dpr,0,0,dpr,0,0);ctx.fillStyle='#0003';ctx.beginPath();ctx.ellipse(p[0]+3,p[1]+5,25,9,0,0,Math.PI*2);ctx.fill();ctx.fillStyle='#222';ctx.fillRect(p[0]-20,p[1]-3,8,8);ctx.fillRect(p[0]+12,p[1]-3,8,8);ctx.fillStyle=color||'#bb4b3e';polygon2([[p[0]-25,p[1]-6],[p[0]-14,p[1]-15],[p[0]+10,p[1]-15],[p[0]+24,p[1]-6],[p[0]+23,p[1]+1],[p[0]-24,p[1]+1]],ctx.fillStyle);ctx.fillStyle='#a9d6dc';polygon2([[p[0]-10,p[1]-13],[p[0]+7,p[1]-13],[p[0]+13,p[1]-6],[p[0]-15,p[1]-6]],ctx.fillStyle);if(player){ctx.strokeStyle='#fff';ctx.lineWidth=2;ctx.strokeRect(p[0]-27,p[1]-18,54,27)}ctx.restore()}
  };
 G.world.threeWorld={ready:false,setVisible(){},render(){}};
+const rendererStatus=window.__NAIJA_3D_STATUS={status:'loading',stage:'world3d-script-start',history:[],library:'three.js r162'};
+const report3D=(stage,details)=>{rendererStatus.stage=stage;rendererStatus.history.push({stage,at:Date.now(),details:details||null});if(rendererStatus.history.length>40)rendererStatus.history.shift();if(stage==='three-world-ready')rendererStatus.status='ready';if(stage==='first-render-complete')rendererStatus.status='rendering';document.documentElement.dataset.naija3dStatus=rendererStatus.status;document.documentElement.dataset.naija3dStage=stage;console.info('[Naija 3D] '+stage,details||'')};
+G.world.report3DFailure=(stage,error)=>{const message=error?.message||String(error||'Unknown renderer error');rendererStatus.status='failed';rendererStatus.stage=stage||error?.naija3dStage||rendererStatus.stage;rendererStatus.error=message;document.documentElement.dataset.naija3dStatus='failed';document.documentElement.dataset.naija3dStage=rendererStatus.stage;const canvas=document.querySelector('.world-webgl-canvas');if(canvas)canvas.style.display='none';console.error('[Naija 3D] Failed during '+rendererStatus.stage+': '+message,error);const notice=document.getElementById('runtime-error');if(notice){notice.style.display='block';notice.textContent='3D renderer failed during '+rendererStatus.stage+'. Showing the 2D map fallback. '+message}};
 G.world.draw3D=function(ctx,scale,dpr,w,h){
  const city=G.world.threeWorld;
  if(city&&city.ready){ctx.save();ctx.setTransform(dpr,0,0,dpr,0,0);ctx.clearRect(0,0,w,h);ctx.restore();city.render();return}
- return drawCanvasWorld(ctx,scale,dpr,w,h);
+ if(rendererStatus.status==='failed')return drawCanvasWorld(ctx,scale,dpr,w,h);
+ ctx.save();ctx.setTransform(dpr,0,0,dpr,0,0);ctx.clearRect(0,0,w,h);ctx.restore();
 };
-const threeWorldUrl=new URL('./three-world.js?v=20261006-asset-paths-r1',scriptUrl);
-import(threeWorldUrl.href).then(module=>module.createCity3D(G)).catch(error=>console.warn('WebGL city renderer unavailable; keeping the city canvas renderer.',error));
+const threeWorldUrl=new URL('./three-world.js?v=20261006-three-renderer-r2',scriptUrl);
+report3D('world3d-import-start',{url:threeWorldUrl.href});
+import(threeWorldUrl.href).then(async module=>{report3D('three-world-module-loaded',{url:threeWorldUrl.href});const city=await module.createCity3D(G,report3D);G.world.threeWorld=city;report3D('three-world-ready',{canvasConnected:city.renderer.domElement.isConnected,revision:window.__NAIJA_3D_STATUS.library});}).catch(error=>G.world.report3DFailure(error?.naija3dStage||rendererStatus.stage,error));
 })();
-
