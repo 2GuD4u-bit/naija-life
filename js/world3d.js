@@ -199,7 +199,8 @@ G.world.draw3D=function(ctx,scale,dpr,w,h){
  if(rendererStatus.status==='failed')return drawCanvasWorld(ctx,scale,dpr,w,h);
  ctx.save();ctx.setTransform(dpr,0,0,dpr,0,0);ctx.clearRect(0,0,w,h);ctx.restore();
 };
-const threeWorldUrl=new URL('./three-world.js?v=20261006-three-renderer-r4',scriptUrl);
+const threeWorldUrl=new URL('./three-world.js?v=20261006-abuja-city-r5',scriptUrl);
 report3D('world3d-import-start',{url:threeWorldUrl.href});
 import(threeWorldUrl.href).then(async module=>{report3D('three-world-module-loaded',{url:threeWorldUrl.href});const city=await module.createCity3D(G,report3D);G.world.threeWorld=city;report3D('three-world-ready',{canvasConnected:city.renderer.domElement.isConnected,revision:window.__NAIJA_3D_STATUS.library});}).catch(error=>G.world.report3DFailure(error?.naija3dStage||rendererStatus.stage,error));
 })();
+

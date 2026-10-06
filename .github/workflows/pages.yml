@@ -56,4 +56,15 @@ jobs:
         id: deployment
         uses: actions/deploy-pages@v4
       - name: Verify deployed 3D renderer
+        env:
+          NAIJA_SCREENSHOT_DIR: ${{ runner.temp }}/naija-life-3d-screenshots
         run: PLAYWRIGHT_MODULE="$RUNNER_TEMP/naija-life-renderer-smoke/node_modules/playwright/index.mjs" node scripts/verify-production-3d.mjs
+      - name: Save live 3D visual checkpoints
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: abuja-live-3d-visual-checkpoints
+          path: ${{ runner.temp }}/naija-life-3d-screenshots/*.png
+          if-no-files-found: warn
+          retention-days: 14
+

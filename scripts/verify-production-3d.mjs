@@ -1,4 +1,5 @@
 import { pathToFileURL } from 'node:url';
+import { mkdir } from 'node:fs/promises';
 
 const playwright = process.env.PLAYWRIGHT_MODULE
   ? await import(pathToFileURL(process.env.PLAYWRIGHT_MODULE).href)
@@ -6,6 +7,8 @@ const playwright = process.env.PLAYWRIGHT_MODULE
 const { chromium } = playwright;
 
 const target = process.env.NAIJA_SMOKE_URL || 'https://2gud4u-bit.github.io/naija-life/?renderer-smoke=20261006';
+const screenshotDir = process.env.NAIJA_SCREENSHOT_DIR;
+if (screenshotDir) await mkdir(screenshotDir, { recursive: true });
 const browser = await chromium.launch({
   headless: true,
   args: ['--use-gl=angle', '--use-angle=swiftshader', '--enable-webgl', '--ignore-gpu-blocklist']
@@ -109,7 +112,7 @@ try {
           restaurants: ['Blucabana Restaurant', 'The Vue', 'Cilantro Abuja', 'A Class Restaurant', 'Istanbul Restaurant & Café', 'Vibes by Ann’s', 'City View Restaurant'].filter(name => names.has(name)).length,
           carStands: ['Manga Car Stand', 'Abana Car Stand', 'Sarkin Mota Car Stand'].filter(name => names.has(name)).length
         },
-        customBuildersReady: ['car-stand', 'restaurant-property', 'fashion-flagship', 'airport-terminal', 'mosque'].every(name => typeof builders[name] === 'function'),
+        customBuildersReady: ['car-stand', 'restaurant-property', 'fashion-flagship', 'airport-terminal', 'mosque', 'retail-complex', 'transport-terminal'].every(name => typeof builders[name] === 'function'),
         playerMoved: movement.before[0] !== movement.after[0] || movement.before[1] !== movement.after[1],
         visible: canvas ? getComputedStyle(canvas).display !== 'none' : false
       };
@@ -124,7 +127,7 @@ try {
       throw new Error(mode + ': the live page did not produce a visible 3D frame: ' + JSON.stringify(result));
     }
     if (result.dimensions[0] !== 14400 || result.dimensions[1] !== 9600 || result.districts < 20 ||
-        (result.stats.cityLots || 0) < 500 || (result.stats.roundabouts || 0) < 10 ||
+        (result.stats.cityLots || 0) < 500 || (result.stats.roundabouts || 0) < 10 || (result.stats.trees || 0) < 15 ||
         !result.destinations.abujacar || !result.destinations.devoltMould || !result.destinations.airport ||
         result.destinations.restaurants !== 7 || result.destinations.carStands !== 3 ||
         !result.customBuildersReady || !result.playerMoved) {
@@ -132,6 +135,22 @@ try {
     }
     if (mode === 'webgl1-only' && result.webglContext !== 'WebGLRenderingContext') {
       throw new Error('WebGL1-only check did not create a WebGL 1 context: ' + JSON.stringify(result));
+    }
+
+    if (screenshotDir && mode === 'webgl2-preferred') {
+      await page.evaluate(() => {
+        window.Game.state.hour = 12;
+        window.Game.state.minute = 15;
+        window.Game.world.threeWorld.render();
+      });
+      await page.screenshot({ path: `${screenshotDir}/abuja-city-day.png` });
+      await page.evaluate(() => {
+        window.Game.state.hour = 20;
+        window.Game.state.minute = 15;
+        window.Game.world.threeWorld.render();
+      });
+      await page.screenshot({ path: `${screenshotDir}/abuja-city-night.png` });
+      console.log(JSON.stringify({ visualCheckpoints: [`${screenshotDir}/abuja-city-day.png`, `${screenshotDir}/abuja-city-night.png`] }));
     }
 
     console.log(JSON.stringify({ mode, target, requiredFiles: relevantResponses, result, pageErrors }, null, 2));
