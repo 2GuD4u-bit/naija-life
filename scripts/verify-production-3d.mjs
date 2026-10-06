@@ -55,10 +55,14 @@ try {
       window.Game.running = true;
     });
     try {
-      await page.waitForFunction(() => window.__NAIJA_3D_STATUS?.status === 'rendering', null, { timeout: 45000 });
+      await page.waitForFunction(() => ['rendering', 'failed'].includes(window.__NAIJA_3D_STATUS?.status), null, { timeout: 45000 });
     } catch {
       const state = await page.evaluate(() => window.__NAIJA_3D_STATUS || null);
       throw new Error(mode + ': renderer initialized but did not render a frame. Status: ' + JSON.stringify(state) + '; files: ' + JSON.stringify(relevantResponses));
+    }
+    const renderStatus = await page.evaluate(() => window.__NAIJA_3D_STATUS);
+    if (renderStatus.status === 'failed') {
+      throw new Error(mode + ': 3D render failed at ' + renderStatus.stage + ': ' + (renderStatus.error || 'unknown error') + '; stack: ' + (renderStatus.stack || 'unavailable') + '; files: ' + JSON.stringify(relevantResponses));
     }
 
     const result = await page.evaluate(() => {
@@ -94,3 +98,4 @@ try {
 } finally {
   await browser.close();
 }
+
