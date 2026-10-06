@@ -46,7 +46,7 @@ export async function createCity3D(G,diagnostic=()=>{}){
  function label(text,bg='#f8f8f4',fg='#172333',size=18){const k=[text,bg,fg,size].join('|');if(!labelCache.has(k)){const c=document.createElement('canvas');c.width=512;c.height=96;const q=c.getContext('2d');q.fillStyle=bg;q.beginPath();q.roundRect(6,8,500,80,38);q.fill();q.font=`700 ${size}px system-ui, sans-serif`;q.fillStyle=fg;q.textAlign='center';q.textBaseline='middle';q.fillText(text.slice(0,42),256,48,468);const t=new THREE.CanvasTexture(c);t.colorSpace=THREE.SRGBColorSpace;labelCache.set(k,t)}const s=new THREE.Sprite(new THREE.SpriteMaterial({map:labelCache.get(k),transparent:true,depthTest:false}));s.scale.set(Math.min(92,Math.max(32,text.length*1.4)),17,1);s.renderOrder=5;return s}
  function terrainY(x,z){return G.world.heightAt?G.world.heightAt(x,z):0}
  function buildingModel(b,lod){const g=new THREE.Group(),w=Math.max(12,b.w||36),d=Math.max(12,b.h||30),floorsByType={market:1,restaurant:2,mall:2,office:3,bank:3,government:3,hospital:3,hotel:4,apartment:4,university:3,police:2,mosque:1,church:2,gym:2,mechanic:1,club:2,waterfront:1,bus:1,railway:2,airport:2},floorsTarget=floorsByType[b.type]||2,heightByAsset={'fuel-station':8,'bus-terminal':9,'railway-station':11,airport:16,'national-mosque':22,'national-church':24,'shopping-mall':15,'central-bank':25},baseHeight=heightByAsset[b.asset]||Math.max(5.2,Math.min(32,floorsTarget*3.8)),height=lod===0?baseHeight:lod===1?Math.max(5,Math.min(24,baseHeight*.78)):Math.max(4.5,Math.min(16,baseHeight*.52));
-  const base=color(b.color),glass=mat('#8cc6d1',.26,.06),trim=mat('#e2d6bb',.72),accent=mat(b.type==='government'||b.type==='bank'?'#bda264':b.type==='hospital'?'#f0eee5':'#b27750',.75);
+  const base=color(b.color),glass=mat('#8cc6d1',.26,.06),trim=mat('#e2d6bb',.72),accent=mat(b.type==='government'||b.type==='bank'?'#bda264':b.type==='hospital'?'#f0eee5':'#b27750',.75),roof=b.type==='mosque'||b.asset==='national-mosque'?mat('#4d6470',.55):b.type==='church'||b.asset==='national-church'?mat('#4f5964',.75):['market','restaurant','club'].includes(b.type)?mat('#96583f',.76):mat('#52606a',.72);
   flat(g,0,0,0,w+9,d+9,trim);box(g,0,.2,0,w,height,d,base);
   const floors=lod===0?floorsTarget:Math.max(1,Math.round(height/4.3)),floorH=height/floors;
   if(lod<2){
@@ -95,7 +95,6 @@ export async function createCity3D(G,diagnostic=()=>{}){
     box(g,w*.4,height*.95,-d*.24,10,1,10,glass);
    }
   }else{box(g,0,height+.35,0,w+2,.7,d+2,trim)}
-  let roof=b.type==='mosque'||b.asset==='national-mosque'?mat('#4d6470',.55):b.type==='church'||b.asset==='national-church'?mat('#4f5964',.75):['market','restaurant','club'].includes(b.type)?mat('#96583f',.76):mat('#52606a',.72);
   box(g,0,height,0,w+2,.45,d+2,roof);
   if(b.type==='church'||b.asset==='national-church'){
    const sp=new THREE.Mesh(new THREE.ConeGeometry(Math.min(w,d)*.42,Math.min(w,d)*.32,4),accent);sp.position.set(0,height+Math.min(w,d)*.16,0);sp.rotation.y=Math.PI/4;g.add(sp);
