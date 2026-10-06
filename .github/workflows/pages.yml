@@ -23,6 +23,26 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 24
+      - name: Check JavaScript syntax and 3D files
+        run: |
+          for file in js/*.js; do node --check "$file"; done
+          node --input-type=module --check < js/three-world.js
+          node --input-type=module --check < js/vendor/three.module.js
+          test -s js/world3d.js
+          test -s js/three-world.js
+          test -s js/vendor/three.module.js
+          if grep -q 'cdn.jsdelivr.net/npm/three@' js/three-world.js; then
+            echo "The 3D renderer still imports Three.js from an external CDN."
+            exit 1
+          fi
+      - name: Install headless browser for production verification
+        run: |
+          npm install --no-save playwright@1.56.1
+          npx playwright install --with-deps chromium
       - name: Configure Pages
         uses: actions/configure-pages@v5
         with:
@@ -34,3 +54,5 @@ jobs:
       - name: Deploy
         id: deployment
         uses: actions/deploy-pages@v4
+      - name: Verify deployed 3D renderer
+        run: node scripts/verify-production-3d.mjs
