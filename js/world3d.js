@@ -2,27 +2,27 @@
 const G=window.Game;
 const SX=.74,SY=.38;
 const shade=(hex,factor)=>{let c=hex.replace('#','');if(c.length===3)c=c.split('').map(x=>x+x).join('');let n=parseInt(c,16),r=Math.max(0,Math.min(255,Math.round((n>>16)*factor))),g=Math.max(0,Math.min(255,Math.round(((n>>8)&255)*factor))),b=Math.max(0,Math.min(255,Math.round((n&255)*factor)));return `rgb(${r},${g},${b})`};
-G.world.draw3D=function(ctx,scale,dpr,w,h){
+const drawCanvasWorld=function(ctx,scale,dpr,w,h){
  const s=G.state,lot=G.world.carDealership&&G.world.carDealership.lot,px=(x,y,z=0)=>[w/2+((x-s.x)-(y-s.y))*SX*scale+(G.view.panX||0),h/2+((x-s.x)+(y-s.y))*SY*scale-z*scale+(G.view.panY||0)];
  const poly=(points,fill,stroke)=>{ctx.beginPath();points.forEach((p,i)=>{let q=px(p[0],p[1],p[2]||0);i?ctx.lineTo(q[0],q[1]):ctx.moveTo(q[0],q[1])});ctx.closePath();ctx.fillStyle=fill;ctx.fill();if(stroke){ctx.strokeStyle=stroke;ctx.lineWidth=1.2;ctx.stroke()}};
  const polygon2=(points,fill)=>{ctx.beginPath();points.forEach((p,i)=>i?ctx.lineTo(p[0],p[1]):ctx.moveTo(p[0],p[1]));ctx.closePath();ctx.fillStyle=fill;ctx.fill()};
  ctx.save();ctx.setTransform(dpr,0,0,dpr,0,0);ctx.fillStyle='#a9bf91';ctx.fillRect(0,0,w,h);ctx.restore();
  ctx.save();ctx.setTransform(dpr,0,0,dpr,0,0);
- // Water and the pale sandy edge.
- const coast=[[1745,0],[2200,0],[2200,1700],[1875,1700],[1930,1420],[1840,1190],[1970,930],[1855,755],[1990,420],[1670,290]];
- polygon2(coast.map(q=>px(q[0],q[1])), '#55a9c8');
- ctx.lineWidth=8;ctx.strokeStyle='#d7c89d';ctx.beginPath();coast.slice(5).forEach((q,i)=>{let p=px(q[0],q[1]);i?ctx.lineTo(p[0],p[1]):ctx.moveTo(p[0],p[1])});ctx.stroke();
+ // Jabi Lake uses the same surveyed footprint for rendering, navigation, and the minimap.
+ for(const lake of G.world.lakes||[]){const coast=[[lake.x,lake.y],[lake.x+lake.w,lake.y],[lake.x+lake.w,lake.y+lake.h],[lake.x,lake.y+lake.h]].map(q=>px(q[0],q[1]));polygon2(coast,'#55a9c8');ctx.lineWidth=8;ctx.strokeStyle='#d7c89d';ctx.beginPath();coast.forEach((p,i)=>i?ctx.lineTo(p[0],p[1]):ctx.moveTo(p[0],p[1]));ctx.closePath();ctx.stroke()}
  // City park blocks and green spaces.
- for(let y=0;y<G.H;y+=205)for(let x=0;x<G.W;x+=235){let seed=(x*13+y*7)%9;if(seed<3){let p=[[x+12,y+10],[x+205,y+10],[x+205,y+170],[x+12,y+170]];poly(p,seed===0?'#98b989':'#a4c292');for(let k=0;k<3;k++)drawTree(x+45+k*54,y+70+(k%2)*45,0.8)}}
+ const visibleW=w/(SX*scale),visibleH=h/(SY*scale),left=Math.max(0,s.x-visibleW/2-250),right=Math.min(G.W,s.x+visibleW/2+250),top=Math.max(0,s.y-visibleH/2-250),bottom=Math.min(G.H,s.y+visibleH/2+250);
+ for(let y=Math.floor(top/320)*320;y<bottom;y+=320)for(let x=Math.floor(left/320)*320;x<right;x+=320){let seed=(x*13+y*7)%9;if(seed<3){let p=[[x+12,y+10],[x+285,y+10],[x+285,y+270],[x+12,y+270]];poly(p,seed===0?'#98b989':'#a4c292');for(let k=0;k<3;k++)drawTree(x+45+k*74,y+70+(k%2)*45,0.8)}}
  // Wide city streets follow the isometric grid.
  const road=(axis,pos,width,outer,inner)=>{let pts=axis==='x'?[[pos-width/2,-120],[pos+width/2,-120],[pos+width/2,G.H+120],[pos-width/2,G.H+120]]:[[-120,pos-width/2],[G.W+120,pos-width/2],[G.W+120,pos+width/2],[-120,pos+width/2]];poly(pts,outer);let m=width*.82,mid=axis==='x'?[[pos-m/2,-120],[pos+m/2,-120],[pos+m/2,G.H+120],[pos-m/2,G.H+120]]:[[-120,pos-m/2],[G.W+120,pos-m/2],[G.W+120,pos+m/2],[-120,pos+m/2]];poly(mid,inner);};
- G.world.roadX.forEach(x=>road('x',x,112,'#baa982','#626e70'));G.world.roadY.forEach(y=>road('y',y,112,'#baa982','#626e70'));
+ G.world.roadX.forEach((x,i)=>road('x',x,i%5===0?30:i%2===0?20:13,'#baa982','#626e70'));G.world.roadY.forEach((y,i)=>road('y',y,i%4===0?30:i%2===0?20:13,'#baa982','#626e70'));
  // Broken centre lines on the asphalt.
  ctx.strokeStyle='#e8d896';ctx.lineWidth=2;ctx.setLineDash([12,12]);for(let x of G.world.roadX){let a=px(x,0),b=px(x,G.H);ctx.beginPath();ctx.moveTo(a[0],a[1]);ctx.lineTo(b[0],b[1]);ctx.stroke()}for(let y of G.world.roadY){let a=px(0,y),b=px(G.W,y);ctx.beginPath();ctx.moveTo(a[0],a[1]);ctx.lineTo(b[0],b[1]);ctx.stroke()}ctx.setLineDash([]);
  // Small sidewalks, yards and buildings are sorted by depth.
  const sorted=[...G.world.buildings].sort((a,b)=>(a.x+a.y)-(b.x+b.y));
  for(const b of sorted){
    const x=b.x,y=b.y,w0=b.w,h0=b.h,type=b.type;
+   if(b.asset==='aso-rock'){const cx=x+w0/2,cy=y+h0/2;poly([[x+8,cy,0],[x+62,y+18,0],[x+142,y+42,0],[x+w0-22,y+70,0],[x+w0-14,y+h0-32,0],[x+48,y+h0-12,0]],'#726d63');poly([[x+8,cy,0],[x+62,y+18,0],[cx-30,y+42,225],[cx-55,cy,160]],'#595950');poly([[x+62,y+18,0],[x+142,y+42,0],[cx-30,y+42,225],[cx-55,cy,160]],'#777165');poly([[x+142,y+42,0],[x+w0-22,y+70,0],[cx+28,y+35,250],[cx-30,y+42,225]],'#68655b');poly([[x+w0-22,y+70,0],[x+w0-14,y+h0-32,0],[cx+52,cy,125],[cx+28,y+35,250]],'#4f514d');const label=px(cx,cy-18,276);drawLabel(label[0],label[1],'🪨 Aso Rock');continue}
    if(type==='construction'){drawConstructionSite(b);continue;}
     if(b.id==='abujacar_car_stand'){drawAbujaCarStand(b);continue;}
    const floors=['apartment','government','hospital','hotel','university','bank','office'].includes(type)?3:2;
@@ -177,7 +177,7 @@ G.world.draw3D=function(ctx,scale,dpr,w,h){
    const tag=px(cx,sy+sd+4,19);drawLabel(tag[0],tag[1],b.icon+' '+b.name);
  }
  // Palm and shade trees along the blocks, outside the travel lanes.
- for(let i=0;i<52;i++){let x=(i*173+120)%G.W,y=(i*127+80)%G.H,lot=G.world.carDealership&&G.world.carDealership.lot;if(G.world.roadX.some(r=>Math.abs(r-x)<86)||G.world.roadY.some(r=>Math.abs(r-y)<86)||G.world.buildings.some(b=>b.type==='construction'&&x>b.x-145&&x<b.x+b.w+145&&y>b.y-105&&y<b.y+b.h+105)||(lot&&x>lot.x-24&&x<lot.x+lot.w+24&&y>lot.y-24&&y<lot.y+lot.h+24))continue;drawTree(x,y,1)}
+ for(let i=0;i<52;i++){let x=(i*173+120)%G.W,y=(i*127+80)%G.H;if(G.world.roadX.some(r=>Math.abs(r-x)<86)||G.world.roadY.some(r=>Math.abs(r-y)<86)||G.world.buildings.some(b=>b.type==='construction'&&x>b.x-145&&x<b.x+b.w+145&&y>b.y-105&&y<b.y+b.h+105)||(lot&&x>lot.x-24&&x<lot.x+lot.w+24&&y>lot.y-24&&y<lot.y+lot.h+24))continue;drawTree(x,y,1)}
  // Traffic and residents are drawn above the city surfaces.
  for(const c of G.world.cars)if(!(s.vehicle&&s.vehicle.name===c.name))drawVehicle(c.x,c.y,c.color,c.name);
  for(const n of G.world.npcs){drawPerson(n.x,n.y,n.emoji,n.id==='cop'?'#244b9b':'#dfaa76');if(Math.hypot(n.x-s.x,n.y-s.y)<75){let p=px(n.x,n.y,42);drawLabel(p[0],p[1]-13,n.name,true)}}
@@ -187,5 +187,12 @@ G.world.draw3D=function(ctx,scale,dpr,w,h){
  function drawTree(x,y,k){let p=px(x,y);ctx.save();ctx.setTransform(dpr,0,0,dpr,0,0);ctx.fillStyle='#0002';ctx.beginPath();ctx.ellipse(p[0]+8,p[1]+3,16*k,7*k,-.15,0,Math.PI*2);ctx.fill();ctx.fillStyle='#72553a';ctx.fillRect(p[0]-3*k,p[1]-29*k,6*k,30*k);ctx.fillStyle='#267752';ctx.beginPath();ctx.moveTo(p[0],p[1]-77*k);ctx.lineTo(p[0]-24*k,p[1]-36*k);ctx.lineTo(p[0]-17*k,p[1]-42*k);ctx.lineTo(p[0]-30*k,p[1]-20*k);ctx.lineTo(p[0],p[1]-28*k);ctx.lineTo(p[0]+25*k,p[1]-19*k);ctx.lineTo(p[0]+16*k,p[1]-43*k);ctx.lineTo(p[0]+26*k,p[1]-37*k);ctx.closePath();ctx.fill();ctx.fillStyle='#3c9863';ctx.beginPath();ctx.moveTo(p[0],p[1]-77*k);ctx.lineTo(p[0]+17*k,p[1]-43*k);ctx.lineTo(p[0]+12*k,p[1]-33*k);ctx.lineTo(p[0],p[1]-28*k);ctx.lineTo(p[0]-5*k,p[1]-47*k);ctx.closePath();ctx.fill();ctx.restore()}
  function drawPerson(x,y,emoji,color,player){let p=px(x,y);ctx.save();ctx.setTransform(dpr,0,0,dpr,0,0);ctx.fillStyle='#0003';ctx.beginPath();ctx.ellipse(p[0],p[1]+2,9,4,0,0,Math.PI*2);ctx.fill();ctx.fillStyle=color;ctx.fillRect(p[0]-6,p[1]-24,12,18);ctx.fillStyle='#563b30';ctx.beginPath();ctx.arc(p[0],p[1]-29,6,0,Math.PI*2);ctx.fill();ctx.fillStyle='#fff';ctx.font=player?'17px sans-serif':'15px sans-serif';ctx.textAlign='center';ctx.fillText(emoji,p[0],p[1]-24);ctx.restore()}
  function drawVehicle(x,y,color,name,player){let p=px(x,y);ctx.save();ctx.setTransform(dpr,0,0,dpr,0,0);ctx.fillStyle='#0003';ctx.beginPath();ctx.ellipse(p[0]+3,p[1]+5,25,9,0,0,Math.PI*2);ctx.fill();ctx.fillStyle='#222';ctx.fillRect(p[0]-20,p[1]-3,8,8);ctx.fillRect(p[0]+12,p[1]-3,8,8);ctx.fillStyle=color||'#bb4b3e';polygon2([[p[0]-25,p[1]-6],[p[0]-14,p[1]-15],[p[0]+10,p[1]-15],[p[0]+24,p[1]-6],[p[0]+23,p[1]+1],[p[0]-24,p[1]+1]],ctx.fillStyle);ctx.fillStyle='#a9d6dc';polygon2([[p[0]-10,p[1]-13],[p[0]+7,p[1]-13],[p[0]+13,p[1]-6],[p[0]-15,p[1]-6]],ctx.fillStyle);if(player){ctx.strokeStyle='#fff';ctx.lineWidth=2;ctx.strokeRect(p[0]-27,p[1]-18,54,27)}ctx.restore()}
+ };
+G.world.threeWorld={ready:false,setVisible(){},render(){}};
+G.world.draw3D=function(ctx,scale,dpr,w,h){
+ const city=G.world.threeWorld;
+ if(city&&city.ready){ctx.save();ctx.setTransform(dpr,0,0,dpr,0,0);ctx.clearRect(0,0,w,h);ctx.restore();city.render();return}
+ return drawCanvasWorld(ctx,scale,dpr,w,h);
 };
+import('./three-world.js?v=20261006-abuja-expansion-r3').then(module=>module.createCity3D(G)).catch(error=>console.warn('WebGL city renderer unavailable; keeping the city canvas renderer.',error));
 })();
