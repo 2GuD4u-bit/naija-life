@@ -13,16 +13,19 @@ function blocked(x,y){
  if(x<20||x>G.W-20||y<20||y>G.H-20)return true;
  if(G.world.isWaterAt?G.world.isWaterAt(x,y):x>6120&&x<6610&&y>1090&&y<1520)return true;
  const lot=G.world.carDealership&&G.world.carDealership.lot;
+ const dealer=G.world.getLocation?.('abujacar_car_stand');
+ const inAssetSpace=(px,py,cx,cy,angle,scale=1)=>{const dx=px-cx,dy=py-cy,c=Math.cos(angle||0),s=Math.sin(angle||0),factor=Math.max(.01,Number(scale)||1);return{x:cx+(dx*c-dy*s)/factor,y:cy+(dx*s+dy*c)/factor}};
+ const dealerPoint=lot&&dealer?inAssetSpace(x,y,lot.x+lot.w/2,lot.y+lot.h/2,dealer.rotation,dealer.scale):{x,y};
  if(lot){
-  const cx=lot.x+lot.w/2;
-  if(x>=lot.x-7&&x<=lot.x+7&&y>lot.y+7&&y<lot.y+lot.h-7)return true;
-  if(x>=lot.x+lot.w-7&&x<=lot.x+lot.w+7&&y>lot.y+7&&y<lot.y+lot.h-7)return true;
-  if(y>=lot.y+lot.h-7&&y<=lot.y+lot.h+7&&x>lot.x+7&&x<lot.x+lot.w-7)return true;
-  if(y>=lot.y-7&&y<=lot.y+7&&Math.abs(x-cx)>lot.gateWidth/2)return true;
+  const cx=lot.x+lot.w/2,px=dealerPoint.x,py=dealerPoint.y;
+  if(px>=lot.x-7&&px<=lot.x+7&&py>lot.y+7&&py<lot.y+lot.h-7)return true;
+  if(px>=lot.x+lot.w-7&&px<=lot.x+lot.w+7&&py>lot.y+7&&py<lot.y+lot.h-7)return true;
+  if(py>=lot.y+lot.h-7&&py<=lot.y+lot.h+7&&px>lot.x+7&&px<lot.x+lot.w-7)return true;
+  if(py>=lot.y-7&&py<=lot.y+7&&Math.abs(px-cx)>lot.gateWidth/2)return true;
  }
- if(G.world.carDealership&&G.world.carDealership.cars.some(c=>!c.interior&&Math.abs(x-c.x)<2.6&&Math.abs(y-c.y)<1.5))return true;
+ if(G.world.carDealership&&G.world.carDealership.cars.some(c=>!c.interior&&Math.abs(dealerPoint.x-c.x)<2.6&&Math.abs(dealerPoint.y-c.y)<1.5))return true;
  if((G.world.houseLots||[]).some(h=>x>h.x-1&&x<h.x+h.w+1&&y>h.y-1&&y<h.y+h.h+1))return true;
- return G.world.buildings.some(b=>{if(b.collision===false)return false;const r=b.collision&&typeof b.collision==='object'?b.collision:b;return x>r.x-1&&x<r.x+r.w+1&&y>r.y-1&&y<r.y+r.h+1});
+ return G.world.buildings.some(b=>{if(b.collision===false)return false;const r=b.collision&&typeof b.collision==='object'?b.collision:b,center=b.id==='abujacar_car_stand'&&lot?{x:lot.x+lot.w/2,y:lot.y+lot.h/2}:{x:b.x+b.w/2,y:b.y+b.h/2},p=(b.rotation?inAssetSpace(x,y,center.x,center.y,b.rotation,b.scale):{x,y});return p.x>r.x-1&&p.x<r.x+r.w+1&&p.y>r.y-1&&p.y<r.y+r.h+1});
 }
 function keyName(e){return e&&typeof e.key==='string'&&e.key?e.key.toLowerCase():''}
 function isTextEntry(target){return !!(target&&target.closest&&target.closest('input,textarea,select,[contenteditable="true"]'))}
