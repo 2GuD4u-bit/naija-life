@@ -111,8 +111,7 @@ export async function createCity3D(G,diagnostic=()=>{}){
   if(b.asset==='airport'){
    const aircraft=new THREE.Group();aircraft.position.set(w*.62,0,d*.12);box(aircraft,0,4,0,15,1.3,2,mat('#e6e3d8'));box(aircraft,1,4,0,5,1.1,7,mat('#d8d9d6'));box(aircraft,0,4,-5,3,.6,10,mat('#f4f2eb'));box(aircraft,-6,4,0,2,.7,4,mat('#f4f2eb'));g.add(aircraft);
   }
-  
-return g;
+  return g;
  }
  function carModel(parent,x,z,tint,kind='sedan',large=false,local=false){const g=new THREE.Group();g.position.set(x,local?0:terrainY(x,z),z);const bus=kind==='bus'||kind==='minibus',w=bus?2.5:kind==='suv'?2.05:1.9,l=bus?7:kind==='suv'?4.8:4.4,h=bus?2.75:kind==='suv'?1.9:1.45,paint=mat(tint||'#263544',.35,.38);box(g,0,.12,0,l*.91,h*.62,w,paint);box(g,-l*.055,.12+h*.49,0,l*.46,h*.43,w*.86,mat('#8ec2ce',.23,.08));box(g,l*.37,.18,0,l*.16,.2,w*.92,mat('#faf0d3',.35,.25));for(const xx of [-l*.32,l*.32])for(const zz of [-w*.55,w*.55]){const wheel=new THREE.Mesh(wheelGeometry,mats.dark);wheel.rotation.z=Math.PI/2;wheel.position.set(xx,.35,zz);g.add(wheel)}parent.add(g);return g}
  function treeBatch(group,cx,cz,seed,count=42){
@@ -163,8 +162,7 @@ return g;
   const v=[-w/2,3.55,-d/2,w/2,3.55,-d/2,0,3.55+2.9,-d/2,-w/2,3.55,d/2,w/2,3.55,d/2,0,3.55+2.9,d/2],geo=new THREE.BufferGeometry();geo.setAttribute('position',new THREE.Float32BufferAttribute(v,3));geo.setIndex([0,1,2,3,5,4,0,3,4,0,4,1,1,4,5,1,5,2,2,5,3,2,3,0]);geo.computeVertexNormals();g.add(new THREE.Mesh(geo,roof));
   const frontGlass=mat('#83b8c4',.26,.12);for(const side of [-1,1])for(const x of [-w*.32,w*.32]){box(g,x,1.35,side*(d/2+.12),Math.min(4.5,w*.22),1.45,.22,window);box(g,x,1.35+((x>0)?0:0),side*(d/2+.25),.22,1.6,.14,trim)}
   for(const x of [-w*.42,w*.42])box(g,x,1.35,-d/2-.12,Math.min(3.5,w*.18),1.45,.2,window);
-  box(g,0,.25,-d/2-.25,Math.max(2.2,w*.12),2.25,.38,mat('#604b3c'));
-flat(g,0,.12,-d/2-2,Math.min(w*.56,15),3.8,mat('#cfc6b6'));for(const x of [-w*.19,w*.19])box(g,x,.28,-d/2-2.7,.42,2.65,.42,trim);box(g,0,2.9,-d/2-2.55,Math.min(12,w*.62),.45,4.2,roof);
+  box(g,0,.25,-d/2-.25,Math.max(2.2,w*.12),2.25,.38,mat('#604b3c'));flat(g,0,.12,-d/2-2,Math.min(w*.56,15),3.8,mat('#cfc6b6'));for(const x of [-w*.19,w*.19])box(g,x,.28,-d/2-2.7,.42,2.65,.42,trim);box(g,0,2.9,-d/2-2.55,Math.min(12,w*.62),.45,4.2,roof);
   // Each plot reads as its own small compound, with a gated wall, garden beds and a drive.
   const wallH=1.1,edgeZ=d/2+5,frontZ=-d/2-5;box(g,0,.2,edgeZ,w+10,wallH,.55,base);box(g,-w/2-5,.2,0,.55,wallH,d+10,base);box(g,w/2+5,.2,0,.55,wallH,d+10,base);for(const side of [-1,1])box(g,side*(w*.25+1),.2,frontZ,(w-6)/2,wallH,.55,base);for(const x of [-w/2-5,w/2+5])box(g,x,.25,frontZ,1.15,2.4,1.15,trim);
   for(let i=0;i<3;i++){const x=(i-1)*w*.31,z=d*.23,bed=new THREE.Mesh(new THREE.CylinderGeometry(2.1,2.5,.55,7),mat(i===1?'#657c4d':'#6c8151'));bed.position.set(x,.58,z);g.add(bed);const plant=new THREE.Mesh(new THREE.SphereGeometry(2.2,7,5),i%2?mats.leaf2:mats.leaf);plant.position.set(x,2.7,z);plant.scale.set(1,1.15,1);g.add(plant)}
@@ -217,8 +215,7 @@ flat(g,0,.12,-d/2-2,Math.min(w*.56,15),3.8,mat('#cfc6b6'));for(const x of [-w*.1
   for(const z of [-lotD/2+4,lotD/2-4]){const gap=z>0?18:0,start=-lotW/2+7,end=lotW/2-7;for(let x=start;x<end;x+=8){if(z>0&&x>=-gap&&x<=gap)continue;box(site,x+4,1,z,8,.18,.28,mat('#3c7881'));box(site,x+4,1.8,z,8,.16,.28,mat('#568a89'))}}
   for(const x of [-lotW/2+4,lotW/2-4])for(const z of [-lotD/2+8,0,lotD/2-8]){box(site,x,2.8,z,1,3,1,mat('#c7b087'));const lamp=new THREE.PointLight('#ffe2a7',18,20);lamp.position.set(x,6,z);site.add(lamp)}
   const bw=78,bd=58,floor=4.1;flat(site,0,.55,0,bw+7,bd+7,mat('#777a74'));
-  for(let level=0;
-level<5;level++){
+  for(let level=0;level<5;level++){
    const y=.8+level*floor;flat(site,0,y,0,bw,bd,mat(level===4?'#858981':'#969a92'));
    for(const x of [-bw/2+2,bw/2-2])for(const z of [-bd/2+2,bd/2-2])box(site,x,y,z,1.15,floor,.95,mat('#b2b2a8'));
    for(const x of [-bw/2+2,0,bw/2-2])for(const z of [-bd/2+2,bd/2-2])box(site,x,y,z,.95,floor,.95,mat('#aaa99f'));
@@ -274,8 +271,7 @@ level<5;level++){
   box(root,-w*.34,.2,d*.44,2,4,2,mat('#a99d86'));box(root,w*.34,.2,d*.44,2,4,2,mat('#a99d86'));const gate=label('SALES  ·  BUY  ·  SELL  ·  TRADE-IN','#20262a','#f3d88e',16);gate.scale.set(40,8,1);gate.position.set(0,3,d*.47);root.add(gate);group.add(root);return root}
  function restaurantProperty(group,b){const w=Math.max(104,b.w+38),d=Math.max(82,b.h+34),root=new THREE.Group();root.position.set(b.x+b.w/2,terrainY(b.x+b.w/2,b.y+b.h/2),b.y+b.h/2);const club=b.type==='club',wall=mat(club?'#29343d':'#8a6b50',.68,.08),roof=mat(club?'#25313b':'#393f3e',.48,.2),glass=new THREE.MeshStandardMaterial({color:club?'#a7d5da':'#f4ca7f',roughness:.2,metalness:.04,emissive:'#f4a74a',emissiveIntensity:.34,transparent:true,opacity:.72});customMaterials.push(glass);flat(root,0,.04,0,w,d,mat('#c9b68e'));flat(root,0,.24,-d*.05,w-6,d*.82,mat('#ddd0b9'));box(root,0,.4,-d*.18,w*.76,8,d*.48,wall);box(root,0,4.6,-d*.426,w*.68,4.9,.32,glass);for(let x=-w*.31;x<=w*.31;x+=w*.155)box(root,x,4.6,-d*.44,.42,5.2,.5,mat('#352f2b'));
   box(root,0,9,-d*.17,w*.82,.8,d*.55,roof);for(const x of [-w*.37,w*.37])box(root,x,.4,-d*.17,1,9,1,mat('#c4ad87'));const sign=label(b.name.toUpperCase(),club?'#24303b':'#362a25','#ffe7b1',22);sign.scale.set(Math.min(75,w*.66),11,1);sign.position.set(0,8,-d*.47);root.add(sign);
-  const patioZ=d*.29;flat(root,0,.26,patioZ,w*.86,d*.3,mat('#b8996e'));for(let x=-w*.32;x<=w*.32;x+=w*.32){for(let z of [patioZ-d*.08,patioZ+d*.08]){const table=ne
-w THREE.Mesh(new THREE.CylinderGeometry(3.3,3.3,.42,10),mat('#574538'));table.position.set(x,1.2,z);root.add(table);box(root,x,.3,z,1.3,1.5,1.3,mat('#59493b'));for(const side of [-1,1])box(root,x+side*4,.25,z,1,.9,1,mat('#675646'))}}
+  const patioZ=d*.29;flat(root,0,.26,patioZ,w*.86,d*.3,mat('#b8996e'));for(let x=-w*.32;x<=w*.32;x+=w*.32){for(let z of [patioZ-d*.08,patioZ+d*.08]){const table=new THREE.Mesh(new THREE.CylinderGeometry(3.3,3.3,.42,10),mat('#574538'));table.position.set(x,1.2,z);root.add(table);box(root,x,.3,z,1.3,1.5,1.3,mat('#59493b'));for(const side of [-1,1])box(root,x+side*4,.25,z,1,.9,1,mat('#675646'))}}
   for(const x of [-w*.42,w*.42]){box(root,x,.3,patioZ,2,3,2,mat('#b89a73'));const tree=new THREE.Mesh(new THREE.ConeGeometry(3.2,8,6),mats.leaf);tree.position.set(x,7,patioZ);root.add(tree)}for(const x of [-w*.37,w*.37]){const lamp=new THREE.PointLight('#ffc979',10,25);lamp.position.set(x,8,-d*.22);root.add(lamp)}group.add(root);return root}
  function fashionFlagship(group,b){const w=Math.max(180,b.w),d=Math.max(116,b.h),root=new THREE.Group();root.position.set(b.x+b.w/2,terrainY(b.x+b.w/2,b.y+b.h/2),b.y+b.h/2);flat(root,0,.04,0,w+36,d+32,mat('#b7aa91'));flat(root,0,.22,0,w+20,d+16,mat('#313538'));const black=mat('#161b20',.38,.32),brass=mat('#c69a48',.4,.5),glass=new THREE.MeshStandardMaterial({color:'#bbdfe2',roughness:.12,metalness:.12,transparent:true,opacity:.42}),inside=mat('#bd9b70',.7,.1);customMaterials.push(glass);box(root,0,.42,0,w,14,d,black);box(root,0,1.5,-d*.503,w*.88,11,.24,glass);for(let x=-w*.44;x<=w*.44;x+=w*.11)box(root,x,1.4,-d*.51,.5,11,.55,brass);box(root,0,14.9,0,w+5,1.1,d+5,black);box(root,0,15.6,0,w-16,.5,d-16,brass);box(root,0,14.25,-d*.53,w*.96,.36,.8,brass);
   const name=label('DEVOLT MOULD  ·  ABUJA','#12171c','#f3c46c',30);name.scale.set(w*.6,13,1);name.position.set(0,12.3,-d*.54);root.add(name);flat(root,0,.48,d*.33,w*.62,d*.25,inside);for(let row=0;row<2;row++)for(let col=0;col<5;col++){const x=(col-2)*w*.095,z=d*.25+row*d*.12;box(root,x,.5,z,2.5,4.5,1.4,brass);box(root,x,.7,z,4.7,.26,2.8,mat(['#a14138','#347b73','#d29b36','#293e64','#dfd1b5'][(col+row)%5]));box(root,x,.45,z+3,4,.6,1.2,inside)}for(let i=0;i<4;i++){const light=new THREE.PointLight('#ffcf88',13,36);light.position.set((i-1.5)*w*.23,11,-d*.22);root.add(light)}for(const x of [-w*.34,w*.34]){box(root,x,.34,-d*.55,1.5,5,1.5,mat('#c3ad87'));const planter=new THREE.Mesh(new THREE.CylinderGeometry(2,2.6,1.5,8),mat('#55534b'));planter.position.set(x,1.2,-d*.62);root.add(planter);const plant=new THREE.Mesh(new THREE.ConeGeometry(2.5,7,6),mats.leaf);plant.position.set(x,5.4,-d*.62);root.add(plant)}group.add(root);return root}
@@ -332,8 +328,7 @@ w THREE.Mesh(new THREE.CylinderGeometry(3.3,3.3,.42,10),mat('#574538'));table.po
  G.world.registerAssetBuilder('retail-complex',retailComplex);
  G.world.registerAssetBuilder('transport-terminal',railwayStation);
  function terrainChunk(g,cx,cz){const side=9,step=chunkSize/side,vertices=[],indices=[];for(let j=0;j<=side;j++)for(let i=0;i<=side;i++){const x=cx+i*step,z=cz+j*step;vertices.push(x,terrainY(x,z),z)}for(let j=0;j<side;j++)for(let i=0;i<side;i++){const a=j*(side+1)+i,b=a+1,c=a+side+1,d=c+1;indices.push(a,c,b,b,c,d)}const geo=new THREE.BufferGeometry();geo.setAttribute('position',new THREE.Float32BufferAttribute(vertices,3));geo.setIndex(indices);geo.computeVertexNormals();const mesh=new THREE.Mesh(geo,mats.grass);mesh.receiveShadow=true;g.add(mesh)}
- function makeChunk(cx,cz){const key=`${cx/chunkSize}:${cz/chunkSize}`,g=new
- THREE.Group();g.userData.key=key;g.userData.buildingLods=[];
+ function makeChunk(cx,cz){const key=`${cx/chunkSize}:${cz/chunkSize}`,g=new THREE.Group();g.userData.key=key;g.userData.buildingLods=[];
   terrainChunk(g,cx,cz);
   // Abuja's planned districts use distinct green-space tones and keep future parcels legible.
   for(const district of G.world.districts||[]){const r=district.bounds;if(r.x>=cx+chunkSize||r.x+r.w<=cx||r.y>=cz+chunkSize||r.y+r.h<=cz)continue;if(district.style.includes('estate')||district.style.includes('residential')){const ix=Math.max(cx,r.x),iz=Math.max(cz,r.y),ax=Math.min(cx+chunkSize,r.x+r.w),az=Math.min(cz+chunkSize,r.y+r.h);rect(g,(ix+ax)/2,(iz+az)/2,ax-ix,az-iz,mat(district.style==='low-rise-estate'?'#a8c495':'#9dbb8e'))}}
@@ -383,4 +378,3 @@ w THREE.Mesh(new THREE.CylinderGeometry(3.3,3.3,.42,10),mat('#574538'));table.po
  diagnostic('three-world-initialization-complete',{canvasConnected:canvas.isConnected,rendererRevision:THREE.REVISION});
  return api;
 }
-
