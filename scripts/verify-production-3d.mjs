@@ -85,7 +85,7 @@ try {
       throw new Error(mode + ': the player could not move from the game start position: ' + JSON.stringify(movement));
     }
 
-    const result = await page.evaluate(() => {
+    const result = await page.evaluate(movement => {
       const api = window.Game.world.threeWorld;
       const canvas = api?.renderer?.domElement;
       const gl = api?.renderer?.getContext();
@@ -113,7 +113,7 @@ try {
         playerMoved: movement.before[0] !== movement.after[0] || movement.before[1] !== movement.after[1],
         visible: canvas ? getComputedStyle(canvas).display !== 'none' : false
       };
-    });
+    }, movement);
 
     if (pageErrors.length) throw new Error(mode + ': browser JavaScript errors: ' + JSON.stringify(pageErrors));
     if (Object.values(relevantResponses).some(status => status >= 400)) {
@@ -140,3 +140,4 @@ try {
 } finally {
   await browser.close();
 }
+
