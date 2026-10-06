@@ -194,5 +194,5 @@ G.world.draw3D=function(ctx,scale,dpr,w,h){
  if(city&&city.ready){ctx.save();ctx.setTransform(dpr,0,0,dpr,0,0);ctx.clearRect(0,0,w,h);ctx.restore();city.render();return}
  return drawCanvasWorld(ctx,scale,dpr,w,h);
 };
-import('./three-world.js?v=20261006-abuja-expansion-r3').then(module=>module.createCity3D(G)).catch(error=>console.warn('WebGL city renderer unavailable; keeping the city canvas renderer.',error));
+import('./three-world.js?v=20261006-abuja-expansion-r4').then(module=>module.createCity3D(G)).catch(error=>console.warn('WebGL city renderer unavailable; keeping the city canvas renderer.',error));
 })();
