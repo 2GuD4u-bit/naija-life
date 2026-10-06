@@ -6,7 +6,7 @@ const color=(v,alt='#b78f68')=>{try{return new THREE.Color(v||alt)}catch{return 
 export async function createCity3D(G,diagnostic=()=>{}){
  diagnostic('three-world-initializing',{module:import.meta.url});
  diagnostic('three-import-start',{module:'./vendor/three.module.js'});
- THREE=await import('./vendor/three.module.js?v=20261006-three-renderer-r2');
+ THREE=await import('./vendor/three.module.js?v=20261006-three-renderer-r3');
  diagnostic('three-import-ready',{revision:THREE.REVISION});
  const source=document.getElementById('world');
  if(!source||!source.parentNode)throw new Error('The game world canvas is missing or is detached from the page.');
@@ -239,8 +239,7 @@ export async function createCity3D(G,diagnostic=()=>{}){
   const queued=[...needed].filter(k=>!chunks.has(k)).sort((a,b)=>{const[ax,az]=a.split(':').map(Number),[bx,bz]=b.split(':').map(Number);return Math.hypot((ax+.5)*chunkSize-targetX,(az+.5)*chunkSize-targetZ)-Math.hypot((bx+.5)*chunkSize-targetX,(bz+.5)*chunkSize-targetZ)});
   for(const key of queued.slice(0,3)){const[x,z]=key.split(':').map(Number);makeChunk(x*chunkSize,z*chunkSize)}
   for(const key of chunks.keys())if(!needed.has(key))discardChunk(key);
-  const lodCamera={position:new THREE.Vector3(targetX,terrainY(targetX,targetZ),targetZ)};
-  for(const g of chunks.values()){for(const lod of g.userData.buildingLods||[])lod.update(lodCamera);const homes=g.userData.homeLOD;if(!homes)continue;let changed=false;for(const item of homes.items){const near=Math.hypot(item.x-targetX,item.z-targetZ)<260;if(near===item.near)continue;item.near=near;if(near){const detail=makeHouse(item.h);detail.position.set(item.x,item.ground,item.z);item.parent.add(detail);item.detail=detail}else if(item.detail){item.parent.remove(item.detail);item.detail.traverse(o=>{if(o.geometry&&!sharedGeometry.has(o.geometry))o.geometry.dispose()});item.detail=null}dummyHome(item,homes.bodies,homes.roofs);changed=true}if(changed){homes.bodies.instanceMatrix.needsUpdate=true;homes.roofs.instanceMatrix.needsUpdate=true}}
+  for(const g of chunks.values()){for(const lod of g.userData.buildingLods||[])lod.update(camera);const homes=g.userData.homeLOD;if(!homes)continue;let changed=false;for(const item of homes.items){const near=Math.hypot(item.x-targetX,item.z-targetZ)<260;if(near===item.near)continue;item.near=near;if(near){const detail=makeHouse(item.h);detail.position.set(item.x,item.ground,item.z);item.parent.add(detail);item.detail=detail}else if(item.detail){item.parent.remove(item.detail);item.detail.traverse(o=>{if(o.geometry&&!sharedGeometry.has(o.geometry))o.geometry.dispose()});item.detail=null}dummyHome(item,homes.bodies,homes.roofs);changed=true}if(changed){homes.bodies.instanceMatrix.needsUpdate=true;homes.roofs.instanceMatrix.needsUpdate=true}}
   if(performance.now()-lastSync>400){syncActors();lastSync=performance.now()}
   const player=s.vehicle?vehicles.get(s.vehicle.id||s.vehicle.name):null;
   if(player){player.position.set(s.x,terrainY(s.x,s.y),s.y);player.rotation.y=-(s.angle||0);player.visible=true;playerFigure.visible=false}else{playerFigure.position.set(s.x,terrainY(s.x,s.y),s.y);playerFigure.rotation.y=-(s.angle||0);playerFigure.visible=true}
