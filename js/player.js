@@ -25,6 +25,9 @@ function blocked(x,y){
  }
  if(G.world.carDealership&&G.world.carDealership.cars.some(c=>!c.interior&&Math.abs(dealerPoint.x-c.x)<2.6&&Math.abs(dealerPoint.y-c.y)<1.5))return true;
  if((G.world.houseLots||[]).some(h=>x>h.x-1&&x<h.x+h.w+1&&y>h.y-1&&y<h.y+h.h+1))return true;
+ const chunkSize=G.world.mapMeta?.chunkSize||800,lotsByChunk=G.world.cityLotsByChunk;
+ if(lotsByChunk){const cx=Math.floor(x/chunkSize),cy=Math.floor(y/chunkSize);for(let ix=cx-1;ix<=cx+1;ix++)for(let iy=cy-1;iy<=cy+1;iy++)if((lotsByChunk[ix+':'+iy]||[]).some(b=>x>b.x-1&&x<b.x+b.w+1&&y>b.y-1&&y<b.y+b.h+1))return true}
+ else if((G.world.cityLots||[]).some(b=>x>b.x-1&&x<b.x+b.w+1&&y>b.y-1&&y<b.y+b.h+1))return true;
  return G.world.buildings.some(b=>{if(b.collision===false)return false;const r=b.collision&&typeof b.collision==='object'?b.collision:b,center=b.id==='abujacar_car_stand'&&lot?{x:lot.x+lot.w/2,y:lot.y+lot.h/2}:{x:b.x+b.w/2,y:b.y+b.h/2},p=(b.rotation?inAssetSpace(x,y,center.x,center.y,b.rotation,b.scale):{x,y});return p.x>r.x-1&&p.x<r.x+r.w+1&&p.y>r.y-1&&p.y<r.y+r.h+1});
 }
 function keyName(e){return e&&typeof e.key==='string'&&e.key?e.key.toLowerCase():''}
