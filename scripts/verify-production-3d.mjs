@@ -1,4 +1,9 @@
-import { chromium } from 'playwright';
+import { pathToFileURL } from 'node:url';
+
+const playwright = process.env.PLAYWRIGHT_MODULE
+  ? await import(pathToFileURL(process.env.PLAYWRIGHT_MODULE).href)
+  : await import('playwright');
+const { chromium } = playwright;
 
 const target = 'https://2gud4u-bit.github.io/naija-life/?renderer-smoke=20261006';
 const browser = await chromium.launch({
