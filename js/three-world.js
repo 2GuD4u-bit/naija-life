@@ -327,7 +327,34 @@ export async function createCity3D(G,diagnostic=()=>{}){
  for(const name of ['civic-bank','church'])G.world.registerAssetBuilder(name,architecturalAsset);
  G.world.registerAssetBuilder('retail-complex',retailComplex);
  G.world.registerAssetBuilder('transport-terminal',railwayStation);
- function terrainChunk(g,cx,cz){const side=9,step=chunkSize/side,vertices=[],indices=[];for(let j=0;j<=side;j++)for(let i=0;i<=side;i++){const x=cx+i*step,z=cz+j*step;vertices.push(x,terrainY(x,z),z)}for(let j=0;j<side;j++)for(let i=0;i<side;i++){const a=j*(side+1)+i,b=a+1,c=a+side+1,d=c+1;indices.push(a,c,b,b,c,d)}const geo=new THREE.BufferGeometry();geo.setAttribute('position',new THREE.Float32BufferAttribute(vertices,3));geo.setIndex(indices);geo.computeVertexNormals();const mesh=new THREE.Mesh(geo,mats.grass);mesh.receiveShadow=true;g.add(mesh)}
+ function estateCompound(group,estate){
+  const root=new THREE.Group(),cx=estate.x+estate.w/2,cz=estate.y+estate.h/2,ground=terrainY(cx,cz);
+  root.position.set(cx,ground,cz);
+  const lawn=mat(estate.style==='garden-estate'?'#9ebd88':'#aac495'),lane=mat('#59646a',.92),wall=mat('#d6d0c2',.72),gate=mat('#28353a',.48,.34),hedge=mat('#597b52');
+  flat(root,0,.035,0,estate.w+24,estate.h+24,lawn);
+  // The compound wall leaves a drive opening at the named estate gate.
+  for(const side of [-1,1]){box(root,side*(estate.w/2+7),.65,0,.65,1.3,estate.h+14,wall);box(root,0,.65,side*(estate.h/2+7),estate.w+14,1.3,.65,wall)}
+  const gateX=estate.gate?estate.gate.x-cx:0,gateZ=estate.gate?estate.gate.y-cz:-estate.h/2;
+  box(root,gateX-13,1.25,gateZ,1.5,3,1.5,wall);box(root,gateX+13,1.25,gateZ,1.5,3,1.5,wall);box(root,gateX,1.1,gateZ,22,2.2,.48,gate);
+  // Shared internal street and smaller cross streets make each estate physically readable from above.
+  flat(root,0,.14,0,10,estate.h-32,lane);for(const z of [-estate.h*.27,estate.h*.12,estate.h*.43])flat(root,0,.16,z,estate.w-34,7,lane);
+  for(const z of [-estate.h*.27,estate.h*.12,estate.h*.43])for(let x=-estate.w*.42;x<estate.w*.43;x+=24)flat(root,x,.23,z,9,.35,mats.line);
+  for(const x of [-estate.w*.34,estate.w*.34])for(const z of [-estate.h*.34,0,estate.h*.34]){const bed=new THREE.Mesh(new THREE.CylinderGeometry(3.1,3.8,.55,8),hedge);bed.position.set(x,.42,z);root.add(bed);const crown=new THREE.Mesh(new THREE.SphereGeometry(4.8,8,6),mats.leaf);crown.position.set(x,5.2,z);crown.scale.set(1,1.18,1);root.add(crown)}
+  for(const z of [-estate.h*.3,estate.h*.05,estate.h*.38])for(const x of [-estate.w*.43,estate.w*.43]){box(root,x,3.1,z,.32,6,.32,mat('#566267',.55,.45));const lamp=new THREE.PointLight('#ffd68a',3.4,22);lamp.position.set(x,6.1,z);root.add(lamp)}
+  const sign=label(estate.name.toUpperCase(),'#243139','#f3e3bb',14);sign.scale.set(Math.min(50,estate.w*.28),6,1);sign.position.set(gateX,4.3,gateZ-1.1);root.add(sign);group.add(root);return root;
+ }
+ function jabiWaterfront(group,lake){
+  const root=new THREE.Group(),cx=lake.x+lake.w/2,cz=lake.y+lake.h/2,ground=terrainY(cx,cz),waterMat=new THREE.MeshStandardMaterial({color:'#4d9fc4',roughness:.18,metalness:.2,transparent:true,opacity:.9,emissive:'#174d6c',emissiveIntensity:.14}),shore=mat('#d0c5a6',.82),paving=mat('#c7c1af',.86),timber=mat('#8b6947',.8);customMaterials.push(waterMat);
+  root.position.set(cx,ground,cz);
+  // An elliptical shoreline reads as a lake instead of a rectangular pool in the isometric camera.
+  const edge=new THREE.Mesh(new THREE.RingGeometry(.96,1.06,64),shore);edge.rotation.x=-Math.PI/2;edge.scale.set(lake.w*.52,lake.h*.52,1);edge.position.y=.09;root.add(edge);
+  const water=new THREE.Mesh(new THREE.CircleGeometry(1,64),waterMat);water.rotation.x=-Math.PI/2;water.scale.set(lake.w*.5,lake.h*.5,1);water.position.y=.15;root.add(water);
+  flat(root,0,.22,lake.h*.49,lake.w*.66,22,paving);flat(root,-lake.w*.23,.27,lake.h*.42,80,12,timber);flat(root,lake.w*.18,.27,lake.h*.42,64,12,timber);
+  // Three waterfront pavilions, green banks and path lighting keep the lake active without filling it with generic towers.
+  for(const x of [-lake.w*.31,0,lake.w*.31]){const z=-lake.h*.42;flat(root,x,.22,z,40,30,paving);for(const dx of [-14,14])for(const dz of [-9,9])box(root,x+dx,3,z+dz,.55,6,.55,mat('#5f6967',.48));box(root,x,6.2,z,36,.65,25,mat('#344b52',.42));const lamp=new THREE.PointLight('#ffdb95',7,34);lamp.position.set(x,8,z);root.add(lamp)}
+  for(let i=0;i<20;i++){const a=i/20*Math.PI*2,x=Math.cos(a)*lake.w*.55,z=Math.sin(a)*lake.h*.55;if(z>lake.h*.31&&Math.abs(x)<lake.w*.38)continue;const trunk=new THREE.Mesh(new THREE.CylinderGeometry(.65,.95,8,7),mats.trunk);trunk.position.set(x,4,z);root.add(trunk);const crown=new THREE.Mesh(new THREE.SphereGeometry(5.5+(i%3),8,6),i%3?mats.leaf:mats.leaf2);crown.position.set(x,10,z);crown.scale.set(1,1.25,1);root.add(crown)}
+  const sign=label('JABI LAKE  ·  WATERFRONT','#25414b','#e7f5f1',20);sign.scale.set(72,10,1);sign.position.set(0,8,lake.h*.55);root.add(sign);group.add(root);return root;
+ } function terrainChunk(g,cx,cz){const side=9,step=chunkSize/side,vertices=[],indices=[];for(let j=0;j<=side;j++)for(let i=0;i<=side;i++){const x=cx+i*step,z=cz+j*step;vertices.push(x,terrainY(x,z),z)}for(let j=0;j<side;j++)for(let i=0;i<side;i++){const a=j*(side+1)+i,b=a+1,c=a+side+1,d=c+1;indices.push(a,c,b,b,c,d)}const geo=new THREE.BufferGeometry();geo.setAttribute('position',new THREE.Float32BufferAttribute(vertices,3));geo.setIndex(indices);geo.computeVertexNormals();const mesh=new THREE.Mesh(geo,mats.grass);mesh.receiveShadow=true;g.add(mesh)}
  function makeChunk(cx,cz){const key=`${cx/chunkSize}:${cz/chunkSize}`,g=new THREE.Group();g.userData.key=key;g.userData.buildingLods=[];
   terrainChunk(g,cx,cz);
   // Abuja's planned districts use distinct green-space tones and keep future parcels legible.
@@ -335,8 +362,8 @@ export async function createCity3D(G,diagnostic=()=>{}){
   for(const p of G.world.futurePlots||[]){if(p.x>cx+chunkSize||p.x+p.w<cx||p.y>cz+chunkSize||p.y+p.h<cz)continue;rect(g,p.x+p.w/2,p.y+p.h/2,p.w,p.h,mats.soil);for(let x=p.x+20;x<p.x+p.w;x+=24){flat(g,x,terrainY(x,p.y)+.3,p.y,1,p.h,mat('#bd9c66'))}}
   drawRoads(g,cx,cz);
   if(cx<8900&&cx+chunkSize>7400&&cz<6530&&cz+chunkSize>6290){const left=Math.max(cx,7400),right=Math.min(cx+chunkSize,8900);rect(g,(left+right)/2,6405,right-left,84,mat('#424c53'));for(let x=left+15;x<right;x+=48)flat(g,x,terrainY(x,6405)+.2,6405,20,.45,mats.white)}
-  for(const estate of G.world.residentialEstates||[]){if(estate.x>cx+chunkSize||estate.x+estate.w<cx||estate.y>cz+chunkSize||estate.y+estate.h<cz)continue;rect(g,estate.x+estate.w/2,estate.y+estate.h/2,estate.w,estate.h,mat('#a2bd92'));const roads=[estate.x+estate.w*.5,estate.x+estate.w*.25,estate.x+estate.w*.75];for(const x of roads)rect(g,x,estate.y+estate.h/2,7,estate.h,mat('#637077'));}
-  for(const lake of G.world.lakes||[]){if(lake.x>cx+chunkSize||lake.x+lake.w<cx||lake.y>cz+chunkSize||lake.y+lake.h<cz)continue;const water=mat('#58a9c7',.22,.08),edge=mat('#cbbd9b',.9);rect(g,lake.x+lake.w/2,lake.y+lake.h/2,lake.w,lake.h,water);rect(g,lake.x+lake.w/2,lake.y-4,lake.w+8,8,edge);rect(g,lake.x+lake.w/2,lake.y+lake.h+4,lake.w+8,8,edge);rect(g,lake.x-4,lake.y+lake.h/2,8,lake.h+8,edge);rect(g,lake.x+lake.w+4,lake.y+lake.h/2,8,lake.h+8,edge)}
+  for(const estate of G.world.residentialEstates||[]){const ex=Math.floor((estate.x+estate.w/2)/chunkSize)*chunkSize,ez=Math.floor((estate.y+estate.h/2)/chunkSize)*chunkSize;if(ex===cx&&ez===cz)estateCompound(g,estate)}
+  for(const lake of G.world.lakes||[]){const lx=Math.floor((lake.x+lake.w/2)/chunkSize)*chunkSize,lz=Math.floor((lake.y+lake.h/2)/chunkSize)*chunkSize;if(lx===cx&&lz===cz)jabiWaterfront(g,lake)}
   const lotKey=`${cx/chunkSize}:${cz/chunkSize}`;buildCityFabric(g,G.world.cityLotsByChunk?.[lotKey],cx,cz);
   for(const r of G.world.roundabouts||[])if(Math.floor(r.x/chunkSize)===cx/chunkSize&&Math.floor(r.y/chunkSize)===cz/chunkSize)roundaboutAsset(g,r);
   for(const b of G.world.buildings||[]){const bounds=b.assetBounds||b;if(bounds.x>cx+chunkSize||bounds.x+bounds.w<cx||bounds.y>cz+chunkSize||bounds.y+bounds.h<cz)continue;const builderName=G.world.assetManifest?.[b.asset]?.builder,builder=G.world.assetBuilders?.[builderName]||G.world.assetBuilders?.[b.asset]||G.world.assetBuilders?.architecture;const centerX=bounds.x+bounds.w/2,centerY=bounds.y+bounds.h/2;if(Math.floor(centerX/chunkSize)!==cx/chunkSize||Math.floor(centerY/chunkSize)!==cz/chunkSize)continue;if(builder){builder(g,b,{THREE,mat,box,flat,rect,label,terrainY,buildingModel});continue}architecturalAsset(g,b)}
@@ -378,3 +405,4 @@ export async function createCity3D(G,diagnostic=()=>{}){
  diagnostic('three-world-initialization-complete',{canvasConnected:canvas.isConnected,rendererRevision:THREE.REVISION});
  return api;
 }
+
