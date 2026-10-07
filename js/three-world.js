@@ -241,29 +241,100 @@ export async function createCity3D(G,diagnostic=()=>{}){
  function rockFormation(group,b){const cx=b.x+b.w/2,cz=b.y+b.h/2,random=seeded(5400),segments=12,levels=[0,27,92,177,258,315],radii=[148,142,119,91,53,15],vertices=[],indices=[],geometry=new THREE.BufferGeometry();for(let k=0;k<levels.length;k++){for(let i=0;i<segments;i++){const a=i/segments*Math.PI*2,jitter=.84+random()*.32,x=cx+Math.cos(a)*radii[k]*jitter,z=cz+Math.sin(a)*radii[k]*.76*jitter;vertices.push(x,terrainY(x,z)+levels[k],z)}}for(let k=0;k<levels.length-1;k++)for(let i=0;i<segments;i++){const a=k*segments+i,b0=k*segments+(i+1)%segments,c=(k+1)*segments+i,d=(k+1)*segments+(i+1)%segments;indices.push(a,c,b0,b0,c,d)}geometry.setAttribute('position',new THREE.Float32BufferAttribute(vertices,3));geometry.setIndex(indices);geometry.computeVertexNormals();const tones=[mat('#514f48',.98),mat('#615d54',.96),mat('#716b5f',.95),mat('#4c514c',.98),mat('#837969',.94)];for(let k=0;k<levels.length-1;k++)geometry.addGroup(k*segments*6,segments*6,k%tones.length);group.add(new THREE.Mesh(geometry,tones));
   const boulderGeo=new THREE.DodecahedronGeometry(12,0),boulders=new THREE.InstancedMesh(boulderGeo,tones[0],18),dummy=new THREE.Object3D();for(let i=0;i<18;i++){const a=random()*Math.PI*2,r=95+random()*70,x=cx+Math.cos(a)*r,z=cz+Math.sin(a)*r*.76;dummy.position.set(x,terrainY(x,z)+7+random()*6,z);dummy.rotation.set(random()*.25,random()*6.28,random()*.25);dummy.scale.set(.8+random()*1.4,.75+random()*1.6,.7+random()*1.3);dummy.updateMatrix();boulders.setMatrixAt(i,dummy.matrix)}group.add(boulders);
   const path=rect(group,cx,cz+139,b.w*.72,4,mat('#c2a980'));path.rotation.y=-.18;const plaque=label('ASO ROCK  ·  ABUJA','#303432','#f5eddd',20);plaque.scale.set(45,9,1);plaque.position.set(cx,terrainY(cx,cz)+91,cz-b.h*.44);group.add(plaque)}
- function showroomModel(){const g=new THREE.Group(),w=G.world.carDealership.showroom.w,d=G.world.carDealership.showroom.d,h=13.2,charcoal=mat('#22272b',.34,.34),black=mat('#171b1f',.36,.28),glass=new THREE.MeshStandardMaterial({color:'#c1e3e7',roughness:.18,metalness:.06,transparent:true,opacity:.4,depthWrite:false}),stone=mat('#c5baa6',.82),metal=mat('#50575b',.46,.52);customMaterials.push(glass);
-  flat(g,0,.05,0,w+8,d+8,stone);box(g,0,.35,d/2-1,w,h-1.2,2.6,charcoal);box(g,-w/2+1,.3,0,2,h,d,charcoal);box(g,w/2-1,.3,0,2,h,d,charcoal);
-  for(let floor=0;floor<2;floor++){const y=.65+floor*5.4;box(g,0,y,-d/2+.24,w-4,4.3,.48,glass);box(g,0,y+4.42,-d/2+.15,w+1,.46,.64,metal);for(let x=-w/2+4;x<w/2-2;x+=7.4)box(g,x,y,-d/2-.15,.38,4.45,.4,black);box(g,0,y+2.1,-d/2-.18,w-3,.22,.26,metal)}
-  for(let x of [-w/2+2,w/2-2])box(g,x,.35,-d/2-1.1,1,10.2,1.05,stone);
-  box(g,0,11.1,-d/2,w+4,.5,d+2,charcoal);box(g,0,12.7,0,w+5,.55,d+3,black);box(g,0,13.25,0,w+1,.35,d+1,metal);
-  box(g,0,.35,-d/2-.75,8,2.5,.3,glass);box(g,0,.35,-d/2-2,28,.42,8,charcoal);for(const x of [-13,-6,6,13])box(g,x,.45,-d/2-2,.24,3.6,.24,metal);
-  const reception=box(g,0,.55,d*.15,w*.28,.85,2.1,stone);reception.material=mat('#d0c6b3');
-   for(const [i,x] of [-53,-18,17,52].entries()){const car=carModel(g,x,-d*.13,['#151a20','#d0d5d5','#a83b34','#36495a'][i],i===2?'sport':i===1?'sedan':'suv',false,true);car.rotation.y=x===17?.16:-.12}
-   const sign=label('ABUJACAR  ·  CAR DEALERSHIP','#11161c','#fff5df',31);sign.scale.set(72,13,1);sign.position.set(0,10.1,-d/2-.7);g.add(sign);
-  return g}
- function dealership(group,b){const root=new THREE.Group(),lot=G.world.carDealership.lot;root.position.set(lot.x+lot.w/2,terrainY(lot.x+lot.w/2,lot.y+lot.h/2),lot.y+lot.h/2);root.rotation.y=Number(b.rotation)||0;root.scale.setScalar(Number(b.scale)||1);
-  flat(root,0,.1,0,lot.w,lot.h,mat('#42494d'));flat(root,0,.34,0,lot.w-8,lot.h-8,mat('#686967'));flat(root,0,.38,lot.h/2+10,lot.w-12,25,mat('#777a76'));
-  const fence=mat('#202a2e',.58,.36),post=mat('#a99d86');for(let i=0;i<4;i++){const side=i<2?'z':'x',sgn=i%2?1:-1,alongX=side==='z',length=alongX?lot.w:lot.h;for(let p=-length/2+4;p<length/2-4;p+=7){const fx=alongX?p:sgn*(lot.w/2-3),fz=alongX?sgn*(lot.h/2-3):p;if(alongX&&sgn<0&&Math.abs(fx)<lot.gateWidth/2+2)continue;box(root,fx,.4,fz,.55,2.4,.55,fence);if(p+7>=length/2-4)break}const railCount=Math.ceil(length/5);for(let j=0;j<railCount;j++){const p=-length/2+2+j*5,fx=alongX?p:sgn*(lot.w/2-3),fz=alongX?sgn*(lot.h/2-3):p;if(alongX&&sgn<0&&Math.abs(fx)<lot.gateWidth/2+2)continue;box(root,fx,1.1,fz,alongX?5:.18,.16,alongX?.18:5,fence);box(root,fx,2,fz,alongX?5:.16,.14,alongX?.16:5,fence)} }
-  const showroom=G.world.carDealership.showroom,model=showroomModel();model.position.set(showroom.x-lot.x-lot.w/2,.42,showroom.y-lot.y-lot.h/2);root.add(model);
-  const sb=G.world.carDealership.workshop,sx=sb.x-lot.x-lot.w/2,sz=sb.y-lot.y-lot.h/2;box(root,sx,.4,sz,24,8,38,mat('#373e41'));box(root,sx,.5,sz-19.4,18,5,1.1,mat('#697276'));for(const x of [sx-7,sx+7])box(root,x,.45,sz-20.2,.35,5.6,.35,post);const workSign=label('SERVICE BAY','#263239','#efe9db',15);workSign.scale.set(20,4,1);workSign.position.set(sx,7,sz-20.7);root.add(workSign);
-   const boothX=-lot.w/2+17,boothZ=-lot.h/2+17;box(root,boothX,.4,boothZ,10,3.8,8,mat('#d2c6b1'));box(root,boothX,.95,boothZ-4.08,7,1.7,.18,mat('#8ec2ce',.23,.08));box(root,-7,.7,-lot.h/2+3,14,.42,1,mat('#f0dfad'));box(root,7,.7,-lot.h/2+3,14,.42,1,mat('#f0dfad'));box(root,-7,2.2,-lot.h/2+4.2,16,.2,.2,mat('#242a2b'));box(root,7,2.2,-lot.h/2+4.2,16,.2,.2,mat('#242a2b'));const inLabel=label('IN  →','#202832','#f4c448',18),outLabel=label('OUT  ←','#202832','#f4c448',18);inLabel.scale.set(16,4,1);outLabel.scale.set(18,4,1);inLabel.position.set(-7,4.2,-lot.h/2+3);outLabel.position.set(7,4.2,-lot.h/2+3);root.add(inLabel,outLabel);for(const [x,rotation] of [[-7,.15],[7,-.15]]){const arm=box(root,x,2.5,-lot.h/2+9,10,.28,.35,mat('#f2ece0'));arm.rotation.y=rotation}
-  const cars=G.world.carDealership.cars||[];cars.forEach((c,i)=>{const px=c.x-lot.x-lot.w/2,pz=c.y-lot.y-lot.h/2;carModel(root,px,pz,c.color,c.kind,false,true);if(!c.interior){const yellow=mat('#e5b347');for(const side of [-1,1])box(root,px+side*4.6,.39,pz, .12,.045,8,yellow);if(i<2)box(root,px,.39,pz+4,.12,.045,8,yellow)}});
-   for(const x of [-105,-35,35,105]){const z=lot.h*.18;for(const dx of [-16,16])box(root,x+dx,.36,z,.24,.06,38,mat('#565e61'));for(const dz of [-14,14])box(root,x,.36,z+dz,30,.06,.24,mat('#565e61'));box(root,x,.4,z+31,25,.08,10,mat('#68645b'));for(const dx of [-16,16])for(const dz of [-13,13])box(root,x+dx,.38,z+dz,.2,5.9,.2,mat('#50575b',.46,.52));box(root,x,6.5,z,35,.5,31,mat('#737a7b',.48,.3));box(root,x,6.08,z,35,.16,31,mat('#484f53',.62,.35))}
-  for(const x of [-lot.w/2+17,lot.w/2-17]){for(const z of [-lot.h/2+12,lot.h/2-12]){box(root,x,.3,z,2.5,5,2.5,mat('#283238'));const lamp=new THREE.PointLight('#ffd38a',22,42);lamp.position.set(x,7,z);root.add(lamp)}}
-   for(let i=0;i<12;i++){const x=-lot.w/2+14+i*30,z=i%2?-lot.h/2+12:lot.h/2-12;box(root,x,.32,z,.7,7,.7,mats.trunk);for(let arm=0;arm<5;arm++){const leaf=new THREE.Mesh(new THREE.ConeGeometry(1.15,7,5),mats.leaf2);leaf.position.set(x+Math.cos(arm*Math.PI*2/5)*3,7.6+Math.sin(arm*Math.PI*2/5)*1.2,z+Math.sin(arm*Math.PI*2/5)*3);leaf.rotation.z=.8;leaf.rotation.x=.5;root.add(leaf)}}
-  root.userData.type='dealer';group.add(root);return root;
+ function showroomModel(){
+  const site=G.world.carDealership,show=site.showroom,w=show.w,d=show.d;
+  const g=new THREE.Group(),black=mat('#171c20',.42,.34),charcoal=mat('#242b2f',.38,.34),panel=mat('#30373a',.42,.38),stone=mat('#a99e8d',.72,.1),brass=mat('#d5a84d',.35,.56),lit=mat('#f5c46d',.5,.12);
+  const glass=new THREE.MeshStandardMaterial({color:'#a9d8df',roughness:.12,metalness:.12,transparent:true,opacity:.46,depthWrite:false,emissive:'#a96c28',emissiveIntensity:.28});
+  customMaterials.push(glass);flat(g,0,.06,0,w+18,d+18,stone);
+  // Connected wings and an elevated central sign tower give the showroom a varied, multi-level silhouette.
+  box(g,-w*.29,.38,d*.06,w*.38,18,d*.78,charcoal);
+  box(g,w*.30,.38,d*.03,w*.35,20,d*.74,charcoal);
+  box(g,-w*.08,.38,-d*.05,w*.46,27,d*.57,black);
+  box(g,-w*.40,18,d*.18,w*.16,11,d*.42,panel);
+  box(g,w*.40,20,d*.10,w*.15,14,d*.44,panel);
+  box(g,0,27.4,-d*.02,w*.34,8,d*.35,black);
+  // Full-height glazing is split into realistic bays, with warm interior volume behind it.
+  for(let level=0;level<3;level++){
+   const y=1.0+level*7.25;
+   box(g,0,y,-d*.505,w*.91,5.75,.34,glass);
+   box(g,0,y+5.95,-d*.51,w*.94,.42,.62,black);
+   for(let x=-w*.445;x<=w*.445;x+=w*.071)box(g,x,y,-d*.525,.55,6.05,.58,panel);
   }
- function carStand(group,b){const w=Math.max(168,b.w+52),d=Math.max(132,b.h+40),root=new THREE.Group(),ground=terrainY(b.x+b.w/2,b.y+b.h/2);root.position.set(b.x+b.w/2,ground,b.y+b.h/2);flat(root,0,.05,0,w,d,mat('#3e484b'));flat(root,0,.22,0,w-8,d-8,mat('#70716b'));flat(root,0,.38,d*.25,w-16,d*.35,mat('#50585a'));
+  for(const x of [-w*.475,w*.475])box(g,x,.4,-d*.51,2.8,23,1.7,stone);
+  box(g,0,.42,-d*.545,w*.96,2.5,5.5,black);
+  for(const x of [-w*.17,0,w*.17]){box(g,x,.46,-d*.57,1.5,8.8,1.4,brass);box(g,x,.35,-d*.59,15,2.4,.7,glass)}
+  // Visible reception, display dais and lighting continue behind the glass.
+  box(g,-w*.12,.5,d*.16,w*.24,1.15,5,stone);
+  for(let row=0;row<2;row++)for(let i=0;i<3;i++){
+   const car=carModel(g,-w*.31+i*w*.145,-d*.18+row*d*.26,['#111820','#e7e1d4','#a9312c','#334954','#776c55','#e3dfd5'][row*3+i],i===2?'sport':i===1?'sedan':'suv',false,true);
+   car.rotation.y=(i-1)*.09;
+   const uplight=new THREE.PointLight('#ffd08a',6,19);uplight.position.set(-w*.31+i*w*.145,7,-d*.18+row*d*.26);g.add(uplight);
+  }
+  for(const x of [-w*.32,0,w*.32]){const planter=new THREE.Mesh(new THREE.CylinderGeometry(2.3,3.1,1.8,10),mat('#5e584f'));planter.position.set(x,1.2,d*.25);g.add(planter);const plant=new THREE.Mesh(new THREE.ConeGeometry(3.4,8.5,7),mats.leaf);plant.position.set(x,5.8,d*.25);g.add(plant)}
+  box(g,0,29.9,-d*.05,w*.45,1.1,d*.4,black);box(g,0,30.7,-d*.05,w*.39,.28,d*.32,brass);
+  const sign=label('ABUJACAR','#0f1519','#fff8e4',34);sign.scale.set(154,19,1);sign.position.set(0,24.5,-d*.57);g.add(sign);
+  const sub=label('CAR DEALERSHIP','#161b20','#f3c258',21);sub.scale.set(104,9,1);sub.position.set(0,20.0,-d*.575);g.add(sub);
+  const side=label('SALES  ·  BUY  ·  SELL  ·  TRADE-IN  ·  FINANCE','#171c20','#f8e6b6',16);side.scale.set(78,11,1);side.position.set(-w*.435,13.5,-d*.56);g.add(side);
+  for(const x of [-w*.36,-w*.12,w*.12,w*.36]){const down=new THREE.PointLight('#ffd78e',11,30);down.position.set(x,25,-d*.42);g.add(down)}
+  return g;
+ }
+ function dealership(group,b){
+  const root=new THREE.Group(),site=G.world.carDealership,lot=site.lot,cx=lot.x+lot.w/2,cz=lot.y+lot.h/2;
+  root.position.set(cx,terrainY(cx,cz),cz);root.rotation.y=Number(b.rotation)||0;root.scale.setScalar(Number(b.scale)||1);
+  const paving=mat('#626762'),drive=mat('#454b4f'),edge=mat('#d4c8ad'),fence=mat('#1e272b',.58,.42),stone=mat('#a79d8b'),metal=mat('#4a5559',.46,.5),yellow=mat('#e3b84c'),white=mat('#f0eee4'),warm=mat('#f7cb82');
+  flat(root,0,.08,0,lot.w+34,lot.h+38,mat('#7a806f'));flat(root,0,.22,0,lot.w,lot.h,paving);
+  // The boulevard-facing apron links the forecourt to the existing Idu service road.
+  flat(root,0,.3,-lot.h/2-18,lot.w-42,34,drive);flat(root,0,.37,-lot.h/2-35,lot.w-24,4,edge);
+  for(let x=-lot.w*.43;x<lot.w*.44;x+=48)flat(root,x,.42,-lot.h/2-18,25,1.1,white);
+  // Perimeter fence: open only at the two controlled entry lanes.
+  function fenceRun(horizontal,position,start,end){
+   for(let p=start;p<=end;p+=10){
+    const gate=horizontal&&position<0&&p>-92&&p<92;if(gate)continue;
+    const x=horizontal?p:position,z=horizontal?position:p;box(root,x,.32,z,.58,2.8,.58,fence);
+    if(Math.abs(p%40)<1)box(root,x,.32,z,3.4,5.4,3.4,stone);
+    if(p+10>end)break;
+   }
+   for(let p=start;p<end;p+=10){
+    const gate=horizontal&&position<0&&p>-92&&p<92;if(gate)continue;
+    const x=horizontal?p+5:position,z=horizontal?position:p+5;box(root,x,1.22,z,horizontal?9.8:.18,.16,horizontal?.18:9.8,metal);box(root,x,2.14,z,horizontal?9.8:.16,.16,horizontal?.16:9.8,metal);
+   }
+  }
+  fenceRun(true,-lot.h/2,-lot.w/2+5,lot.w/2-5);fenceRun(true,lot.h/2,-lot.w/2+5,lot.w/2-5);fenceRun(false,-lot.w/2,-lot.h/2+5,lot.h/2-5);fenceRun(false,lot.w/2,-lot.h/2+5,lot.h/2-5);
+  const showroom=site.showroom,model=showroomModel();model.position.set(showroom.x-cx,.4,showroom.y-cz);root.add(model);
+  // Service wing is an independent black-and-glass architectural volume.
+  const sb=site.workshop,sx=sb.x-cx,sz=sb.y-cz,serviceGlass=new THREE.MeshStandardMaterial({color:'#9acbd2',roughness:.18,metalness:.1,transparent:true,opacity:.52,emissive:'#e6a456',emissiveIntensity:.18});customMaterials.push(serviceGlass);
+  flat(root,sx,.34,sz,sb.w+22,sb.d+22,mat('#6d706b'));box(root,sx,.42,sz,sb.w,13,sb.d,mat('#20282c',.42,.36));box(root,sx,.9,sz-sb.d*.51,sb.w*.84,8,.35,serviceGlass);box(root,sx,13.6,sz,sb.w+8,.85,sb.d+8,mat('#161c20',.42,.35));
+  for(let x=sx-sb.w*.37;x<sx+sb.w*.4;x+=sb.w*.18)box(root,x,.5,sz-sb.d*.53,.55,8.8,.6,metal);
+  const service=label('ABUJACAR  ·  SERVICE & DETAILING','#182027','#f4d18a',19);service.scale.set(68,8,1);service.position.set(sx,10.5,sz-sb.d*.56);root.add(service);
+  // Security booth, IN/OUT lanes, gates and illuminated frontage pylons.
+  const gateZ=-lot.h/2+18;
+  for(const x of [-62,62]){box(root,x,.42,gateZ,4.4,6.8,5.2,stone);const beacon=new THREE.PointLight('#ffd487',10,26);beacon.position.set(x,8,gateZ);root.add(beacon)}
+  box(root,-100,.42,gateZ+14,18,5.2,14,mat('#d4cab8'));box(root,-100,1.2,gateZ+6.75,13,2.6,.3,serviceGlass);box(root,-100,5.9,gateZ+14,20,.55,15,mat('#252d30'));
+  for(const [x,name,dir] of [[-40,'IN  →',-.14],[40,'OUT  ←',.14]]){const marker=label(name,'#172126','#f5c44e',20);marker.scale.set(26,7,1);marker.position.set(x,5.4,gateZ-2);root.add(marker);const arm=box(root,x,2.6,gateZ+9,27,.3,.42,white);arm.rotation.y=dir}
+  const pylon=label('ABUJACAR\nSALES  ·  BUY  ·  SELL','#11171b','#fff0c5',20);pylon.scale.set(54,15,1);pylon.position.set(-lot.w*.38,11,-lot.h*.47);root.add(pylon);
+  // Marked customer forecourt and front display spaces.
+  function bay(x,z,wide=false){const bw=wide?12:9,bd=wide?19:14;for(const dx of [-bw/2,bw/2])box(root,x+dx,.43,z,.18,.05,bd,yellow);box(root,x,.43,z+bd/2,.18,.05,bw,yellow)}
+  for(let i=0;i<7;i++)bay(-295+i*53,-30,true);
+  for(let i=0;i<3;i++)bay(-290+i*60,140,true);
+  for(let i=0;i<4;i++)for(let row=0;row<2;row++)bay(90+i*60,40+row*90,true);
+  // Three covered display courts hold the premium vehicles at the rear-right side.
+  for(const [i,x] of [92,182,272].entries()){
+   const z=90;flat(root,x,.4,z,76,142,mat('#5b5f5d'));for(const dx of [-35,35])for(const dz of [-62,62])box(root,x+dx,.42,z+dz,.8,8.2,.8,metal);
+   box(root,x,8.3,z,82,.7,148,mat('#596266',.42,.38));box(root,x,7.7,z,78,.16,144,mat('#a7afb0',.26,.22));
+   const canopy=label(i===0?'PREMIUM SUV DISPLAY':i===1?'EXECUTIVE COLLECTION':'CERTIFIED PRE-OWNED','#1b2429','#f3cd75',15);canopy.scale.set(50,6,1);canopy.position.set(x,8.9,z-65);root.add(canopy);
+   const down=new THREE.PointLight('#ffd18b',13,30);down.position.set(x,7,z);root.add(down);
+  }
+  // All inventory uses the shared reusable 3D vehicle geometry.
+  (site.cars||[]).forEach((car,i)=>{const px=car.x-cx,pz=car.y-cz,vehicle=carModel(root,px,pz,car.color,car.kind,false,true);if(!car.interior){vehicle.rotation.y=(i%5===0?Math.PI/2:i%3===0?-.08:.08);bay(px,pz,car.kind==='suv')}});
+  // Planned planting beds, palms, lamps, and low landscape illumination.
+  function palm(x,z,scale=1){box(root,x,.35,z,.8,7*scale,.8,mats.trunk);for(let arm=0;arm<6;arm++){const leaf=new THREE.Mesh(new THREE.ConeGeometry(1.25*scale,7*scale,5),mats.leaf2);leaf.position.set(x+Math.cos(arm*Math.PI/3)*3.2*scale,7.8*scale,z+Math.sin(arm*Math.PI/3)*3.2*scale);leaf.rotation.z=.75;leaf.rotation.x=.55;root.add(leaf)}}
+  function lamp(x,z){box(root,x,.35,z,.65,8,.65,mat('#263136'));box(root,x,8.3,z,2.5,.45,2.5,mat('#d9d2bd'));const light=new THREE.PointLight('#ffd38a',12,38);light.position.set(x,9,z);root.add(light)}
+  for(const [x,z] of [[-320,-198],[-230,-198],[-140,-198],[210,-198],[318,-198],[-330,200],[-230,215],[-130,216],[320,205]])palm(x,z,.95);
+  for(const [x,z] of [[-318,-160],[-190,-160],[-20,-160],[330,-160],[-320,185],[-85,190],[320,185]])lamp(x,z);
+  for(const [x,z] of [[-295,85],[-245,85],[65,-5],[155,-5],[245,-5]]){const planter=new THREE.Mesh(new THREE.CylinderGeometry(3.2,4.2,1.4,10),mat('#6a665b'));planter.position.set(x,1.05,z);root.add(planter);const shrub=new THREE.Mesh(new THREE.SphereGeometry(4.5,8,6),mats.leaf);shrub.position.set(x,4.5,z);root.add(shrub)}
+  const welcome=label('ABUJACAR  ·  LUXURY VEHICLES','#111a20','#fff7df',24);welcome.scale.set(90,12,1);welcome.position.set(0,8,-lot.h*.51);root.add(welcome);
+  root.userData.type='dealer';group.add(root);return root;
+ } function carStand(group,b){const w=Math.max(168,b.w+52),d=Math.max(132,b.h+40),root=new THREE.Group(),ground=terrainY(b.x+b.w/2,b.y+b.h/2);root.position.set(b.x+b.w/2,ground,b.y+b.h/2);flat(root,0,.05,0,w,d,mat('#3e484b'));flat(root,0,.22,0,w-8,d-8,mat('#70716b'));flat(root,0,.38,d*.25,w-16,d*.35,mat('#50585a'));
   const facade=mat('#343b3e',.42,.35),glass=new THREE.MeshStandardMaterial({color:'#a9d4d8',roughness:.2,metalness:.08,transparent:true,opacity:.54}),sign=label(b.name.toUpperCase(),'#171b1e','#f7df9b',24);customMaterials.push(glass);box(root,0,.55,-d*.29,w*.72,13,d*.22,facade);box(root,0,1.4,-d*.405,w*.65,8,.3,glass);for(let x=-w*.34;x<=w*.34;x+=w*.17)box(root,x,1.5,-d*.41,.45,8,.45,mat('#242a2d',.45,.25));box(root,0,13.7,-d*.29,w*.75,.8,d*.24,mat('#202528',.45,.3));sign.scale.set(w*.52,12,1);sign.position.set(0,10.5,-d*.42);root.add(sign);
   for(const [i,x] of [-w*.3,-w*.1,w*.1,w*.3].entries()){const z=d*.03;for(const dx of [-13,13])box(root,x+dx,.38,z,.22,.08,27,mat('#d6b04d'));for(const dz of [-11,11])box(root,x,.38,z+dz,25,.08,.22,mat('#d6b04d'));box(root,x,7.2,z,28,.5,25,mat(i%2?'#535b5e':'#747877',.42,.28));for(const dx of [-13,13])for(const dz of [-11,11])box(root,x+dx,.4,z+dz,.28,6.8,.28,mat('#4c5558',.45,.4));box(root,x,6.9,z,28,.42,25,mat('#647174',.34,.34));}
   const kinds=['suv','sedan','sport','suv','sedan','suv'],paints=['#151a20','#e0ded6','#a53931','#455866','#d0ad6b','#192a37'];kinds.forEach((kind,i)=>{const x=(i%3-1)*w*.27,z=i<3?-d*.02:d*.34;carModel(root,x,z,paints[i],kind,false,true)});
