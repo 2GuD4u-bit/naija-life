@@ -114,7 +114,8 @@ G.world.carDealership={id:'abujacar_car_stand',lot:{x:8045,y:3888,w:360,h:290,ga
  {id:'abujacar-showroom-04',name:'Showroom Executive SUV',x:8290,y:3970,color:'#766a55',kind:'suv',interior:true}
 ]};
 G.world.getLocation('abujacar_car_stand').assetBounds={...G.world.carDealership.lot};
-G.world.lakes=[{id:'jabi-lake',name:'Jabi Lake',x:6380,y:1000,w:560,h:460}];
+G.world.lakes=[{id:'jabi-lake',name:'Jabi Lake',x:6380,y:960,w:660,h:540,shore:34,waterfront:true}];
+G.world.waterfrontZones=[{id:'jabi-waterfront',lakeId:'jabi-lake',name:'Jabi Waterfront',promenade:true,pavilions:3,trees:24}];
 G.world.isWaterAt=function(x,y){return (G.world.lakes||[]).some(l=>x>=l.x&&x<=l.x+l.w&&y>=l.y&&y<=l.y+l.h)};
 G.world.locationTemplates={residential:['house','apartment','villa','estate-gate'],commercial:['shop','restaurant','market','office','hotel','car-dealership','shopping-mall'],public:['police-post','hospital','school','government','mosque','church'],infrastructure:['fuel-station','bus-terminal','railway-station','airport','workshop']};
 G.world.assetManifest={
@@ -254,3 +255,4 @@ G.world.nearBuilding=function(x,y){
 };
 G.world.chunkKey=function(x,y){const size=G.world.mapMeta.chunkSize;return Math.floor(x/size)+':'+Math.floor(y/size)};
 })();
+
