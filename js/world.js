@@ -37,7 +37,7 @@ const defs=[
  {id:'b3',name:'Central Police Post',icon:'🚔',type:'police',x:1655,y:406,w:55,h:44,desc:'Pay a fine or turn yourself in.',asset:'police-post'},
  {id:'b4',name:'Civic Centre',icon:'🏛️',type:'government',x:450,y:908,w:58,h:46,desc:'Public services and city notices.',asset:'civic-centre'},
  {id:'b5',name:'Oja Kitchen',icon:'🍲',type:'restaurant',x:710,y:908,w:48,h:40,desc:'Grab a hot plate of jollof rice.',asset:'restaurant'},
- {id:'abujacar_car_stand',name:'ABUJACAR CAR STAND',icon:'🚘',type:'dealer',x:8186,y:3920,w:126,h:84,desc:'Premium cars, sales advice, and vehicle purchasing in Abuja.',asset:'abujacar-showroom',district:'idu-rail',rotation:0,scale:1,interior:{type:'showroom'},roadConnections:['idu-service-road'],interactionPoint:{x:8215,y:3880},collision:{x:8152,y:3940,w:126,h:84},lod:{high:420,medium:1150,low:2200}},
+ {id:'abujacar_car_stand',name:'ABUJACAR CAR DEALERSHIP',icon:'🚘',type:'dealer',x:8090,y:3980,w:310,h:170,desc:'A flagship luxury vehicle dealership with sales, trade-in, finance, and service facilities.',asset:'abujacar-showroom',district:'idu-rail',rotation:0,scale:1,interior:{type:'showroom'},roadConnections:['idu-service-road'],interactionPoint:{x:8280,y:3880},collision:{x:8090,y:3980,w:310,h:170},lod:{high:650,medium:1600,low:3000}},
  {id:'b7',name:'Fuel Point',icon:'⛽',type:'fuel',x:1348,y:908,w:50,h:38,desc:'Fill your tank.',asset:'fuel-station'},
  {id:'b8',name:'Unity Apartments',icon:'🏢',type:'apartment',x:1657,y:908,w:62,h:54,desc:'Your affordable room is here.',asset:'apartment'},
  {id:'b9',name:'Northside Gym',icon:'🏋️',type:'gym',x:450,y:1410,w:50,h:40,desc:'Train fitness and improve your mood.',asset:'gym'},
@@ -101,17 +101,31 @@ defs.forEach(G.world.registerLocation);
 G.world.locationsById=Object.fromEntries(G.world.buildings.map(b=>[b.id,b]));
 G.world.getLocation=function(id){return G.world.locationsById[id]||null};
 G.world.repositionLocation=function(id,patch={}){const b=G.world.getLocation(id);if(!b)return false;const previous={x:b.x,y:b.y,w:b.w,h:b.h,assetBounds:b.assetBounds?{...b.assetBounds}:null,interactionPoint:b.interactionPoint?{...b.interactionPoint}:null},oldCollision=b.collision&&typeof b.collision==='object'?{...b.collision}:null,x=Number.isFinite(patch.x)?patch.x:b.x,y=Number.isFinite(patch.y)?patch.y:b.y,w=Number.isFinite(patch.w)?patch.w:b.w,h=Number.isFinite(patch.h)?patch.h:b.h,dx=x-previous.x,dy=y-previous.y;b.x=x;b.y=y;b.w=w;b.h=h;b.bounds={x,y,w,h};if(oldCollision)b.collision={...oldCollision,x:x+(oldCollision.x-previous.x),y:y+(oldCollision.y-previous.y),w:oldCollision.w*(w/previous.w),h:oldCollision.h*(h/previous.h)};if(id==='abujacar_car_stand'&&G.world.carDealership){const site=G.world.carDealership;site.lot.x+=dx;site.lot.y+=dy;site.showroom.x+=dx;site.showroom.y+=dy;site.workshop.x+=dx;site.workshop.y+=dy;for(const car of site.cars){car.x+=dx;car.y+=dy}b.assetBounds={...site.lot}}else if(previous.assetBounds){b.assetBounds={...previous.assetBounds,x:previous.assetBounds.x+dx,y:previous.assetBounds.y+dy,w:previous.assetBounds.w*(w/previous.w),h:previous.assetBounds.h*(h/previous.h)}}if(patch.rotation!==undefined)b.rotation=Number(patch.rotation)||0;if(patch.scale!==undefined)b.scale=Number(patch.scale)||1;if(patch.interactionPoint)b.interactionPoint={...patch.interactionPoint};else if(id==='abujacar_car_stand'&&G.world.carDealership){const lot=G.world.carDealership.lot,cx=lot.x+lot.w/2,cy=lot.y+lot.h/2,dx=0,dy=-lot.h/2-20,c=Math.cos(b.rotation),s=Math.sin(b.rotation),co=Math.abs(c),si=Math.abs(s),bw=(lot.w*co+lot.h*si)*b.scale,bh=(lot.w*si+lot.h*co)*b.scale;b.interactionPoint={x:cx+(dx*c+dy*s)*b.scale,y:cy+(-dx*s+dy*c)*b.scale};b.assetBounds={x:cx-bw/2,y:cy-bh/2,w:bw,h:bh}}else if(previous.interactionPoint)b.interactionPoint={...previous.interactionPoint,x:previous.interactionPoint.x+dx,y:previous.interactionPoint.y+dy};else b.interactionPoint={x:x+w/2,y:y+h+12};G.world.threeWorld?.refreshLocation?.(b,previous);return b};
-G.world.carDealership={id:'abujacar_car_stand',lot:{x:8045,y:3888,w:360,h:290,gateWidth:26},showroom:{x:8152,y:3940,w:126,d:84},workshop:{x:8320,y:3948,w:38,d:54},cars:[
- {id:'abujacar-display-suv-01',name:'Executive SUV',x:8090,y:4020,color:'#121820',kind:'suv'},
- {id:'abujacar-display-sedan-01',name:'Luxury Sedan',x:8140,y:4050,color:'#ded9cf',kind:'sedan'},
- {id:'abujacar-display-suv-02',name:'Premium SUV',x:8305,y:4050,color:'#344958',kind:'suv'},
- {id:'abujacar-display-sport-01',name:'Sport Coupe',x:8350,y:4020,color:'#bf392e',kind:'sport'},
- {id:'abujacar-display-executive-01',name:'Executive Saloon',x:8090,y:4110,color:'#263c4d',kind:'sedan'},
- {id:'abujacar-display-suv-03',name:'Premium 4x4',x:8350,y:4110,color:'#e4e0d5',kind:'suv'},
- {id:'abujacar-showroom-01',name:'Showroom SUV',x:8185,y:3970,color:'#171d25',kind:'suv',interior:true},
- {id:'abujacar-showroom-02',name:'Showroom Sedan',x:8220,y:3970,color:'#d0d5d5',kind:'sedan',interior:true},
- {id:'abujacar-showroom-03',name:'Showroom Coupe',x:8255,y:3970,color:'#a6312b',kind:'sport',interior:true},
- {id:'abujacar-showroom-04',name:'Showroom Executive SUV',x:8290,y:3970,color:'#766a55',kind:'suv',interior:true}
+G.world.carDealership={id:'abujacar_car_stand',lot:{x:7920,y:3920,w:720,h:500,gateWidth:84},showroom:{x:8090,y:4010,w:310,d:176},workshop:{x:8460,y:4075,w:112,d:145},cars:[
+ {id:'abujacar-showroom-suv-01',name:'Showroom Executive SUV',x:8018,y:3968,color:'#161c22',kind:'suv',interior:true},
+ {id:'abujacar-showroom-sedan-01',name:'Showroom Luxury Sedan',x:8076,y:3968,color:'#e5e1d5',kind:'sedan',interior:true},
+ {id:'abujacar-showroom-sport-01',name:'Showroom Grand Coupe',x:8134,y:3968,color:'#a52e2c',kind:'sport',interior:true},
+ {id:'abujacar-showroom-suv-02',name:'Showroom Premium 4x4',x:8192,y:3968,color:'#384950',kind:'suv',interior:true},
+ {id:'abujacar-showroom-sedan-02',name:'Showroom Executive Saloon',x:8250,y:3968,color:'#746954',kind:'sedan',interior:true},
+ {id:'abujacar-showroom-suv-03',name:'Showroom Black SUV',x:8308,y:3968,color:'#101519',kind:'suv',interior:true},
+ {id:'abujacar-forecourt-01',name:'Forecourt Black SUV',x:7985,y:4140,color:'#12171d',kind:'suv'},
+ {id:'abujacar-forecourt-02',name:'Forecourt White SUV',x:8038,y:4140,color:'#e3e1d9',kind:'suv'},
+ {id:'abujacar-forecourt-03',name:'Forecourt Graphite SUV',x:8091,y:4140,color:'#394650',kind:'suv'},
+ {id:'abujacar-forecourt-04',name:'Forecourt Executive Sedan',x:8144,y:4140,color:'#d4d7d4',kind:'sedan'},
+ {id:'abujacar-forecourt-05',name:'Forecourt Sport Coupe',x:8197,y:4140,color:'#a93430',kind:'sport'},
+ {id:'abujacar-forecourt-06',name:'Forecourt Midnight SUV',x:8250,y:4140,color:'#17202a',kind:'suv'},
+ {id:'abujacar-forecourt-07',name:'Forecourt Pearl SUV',x:8303,y:4140,color:'#e8e3d8',kind:'suv'},
+ {id:'abujacar-canopy-01',name:'Canopy Black SUV',x:8370,y:4210,color:'#131920',kind:'suv'},
+ {id:'abujacar-canopy-02',name:'Canopy Silver SUV',x:8430,y:4210,color:'#c8ccca',kind:'suv'},
+ {id:'abujacar-canopy-03',name:'Canopy Blue SUV',x:8490,y:4210,color:'#304758',kind:'suv'},
+ {id:'abujacar-canopy-04',name:'Canopy White Sedan',x:8550,y:4210,color:'#e8e4dc',kind:'sedan'},
+ {id:'abujacar-canopy-05',name:'Canopy Grey SUV',x:8370,y:4300,color:'#596165',kind:'suv'},
+ {id:'abujacar-canopy-06',name:'Canopy Red Coupe',x:8430,y:4300,color:'#ac372f',kind:'sport'},
+ {id:'abujacar-canopy-07',name:'Canopy Black SUV II',x:8490,y:4300,color:'#171b20',kind:'suv'},
+ {id:'abujacar-canopy-08',name:'Canopy Champagne Sedan',x:8550,y:4300,color:'#b9ad97',kind:'sedan'},
+ {id:'abujacar-customer-01',name:'Customer SUV',x:7990,y:4312,color:'#25313a',kind:'suv'},
+ {id:'abujacar-customer-02',name:'Customer Sedan',x:8050,y:4312,color:'#d8d6cf',kind:'sedan'},
+ {id:'abujacar-customer-03',name:'Customer SUV II',x:8110,y:4312,color:'#313d45',kind:'suv'}
 ]};
 G.world.getLocation('abujacar_car_stand').assetBounds={...G.world.carDealership.lot};
 G.world.lakes=[{id:'jabi-lake',name:'Jabi Lake',x:6380,y:960,w:660,h:540,shore:34,waterfront:true}];
