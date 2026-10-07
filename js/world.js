@@ -129,7 +129,7 @@ G.world.assetManifest={
  'car-dealership':{renderer:'procedural',builder:'car-stand',detail:'high',interior:true},
  'central-bank':{renderer:'procedural',builder:'civic-bank',detail:'high'},
  'national-mosque':{renderer:'procedural',builder:'mosque',detail:'high'},
- 'national-church':{renderer:'procedural',builder:'church',detail:'high'},
+ 'national-church':{renderer:'procedural',builder:'national-church',detail:'high'},
  'shopping-mall':{renderer:'procedural',builder:'retail-complex',detail:'high'},
  'railway-station':{renderer:'procedural',builder:'transport-terminal',detail:'high'},
  'airport':{renderer:'procedural',builder:'airport-terminal',detail:'high'},
@@ -179,7 +179,14 @@ G.world.futurePlots=[
  {id:'reserve-south-estate',district:'lugbe-south',x:9180,y:8160,w:420,h:880,allowed:['residential','park'],reserved:true},
  {id:'reserve-guzape-green',district:'guzape',x:4400,y:5400,w:500,h:700,allowed:['park','villa','residential'],reserved:true}
 ];
-// Fill the real street blocks with a deterministic mix of occupied city parcels.
+// Purpose-built precincts reserve the focal city blocks for architecture with recognizable Abuja-scale massing.
+G.world.metropolitanPrecincts=[
+ {id:'cbd-financial-quarter',kind:'cbd',name:'CBD Financial Quarter',x:2480,y:2760,w:830,h:760,district:'central-business-district',towers:[{x:.22,z:.25,w:150,d:112,h:62},{x:.68,z:.24,w:132,d:106,h:48},{x:.33,z:.72,w:124,d:102,h:39},{x:.73,z:.69,w:158,d:116,h:54}]},
+ {id:'cbd-civic-quarter',kind:'cbd',name:'CBD Civic Quarter',x:4140,y:2820,w:760,h:700,district:'central-business-district',towers:[{x:.23,z:.28,w:136,d:112,h:44},{x:.65,z:.27,w:158,d:118,h:67},{x:.31,z:.71,w:148,d:96,h:35},{x:.72,z:.69,w:122,d:102,h:48}]},
+ {id:'wuse-market-corridor',kind:'commercial',name:'Wuse Commercial Corridor',x:360,y:1660,w:930,h:360,district:'wuse-central',shops:7},
+ {id:'jabi-retail-corridor',kind:'commercial',name:'Jabi Retail Corridor',x:4760,y:600,w:520,h:600,district:'jabi-utako',shops:5},
+ {id:'garki-business-corridor',kind:'commercial',name:'Garki Business Corridor',x:520,y:2860,w:880,h:390,district:'garki-area-11',shops:7}
+];// Fill the real street blocks with a deterministic mix of occupied city parcels.
 // These are non-interactable background properties; named destinations remain the gameplay locations.
 const cityRandom=seed=>{let n=(seed|0)+0x6d2b79f5;return()=>{n=Math.imul(n^(n>>>15),n|1);n^=n+Math.imul(n^(n>>>7),n|61);return((n^(n>>>14))>>>0)/4294967296}};
 const overlaps=(a,b,pad=0)=>a.x<b.x+b.w+pad&&a.x+a.w+pad>b.x&&a.y<b.y+b.h+pad&&a.y+a.h+pad>b.y;
@@ -193,7 +200,7 @@ for(let xi=0;xi<G.world.roadX.length-1;xi++)for(let yi=0;yi<G.world.roadY.length
  for(let row=0;row<3;row++)for(let col=0;col<3;col++){
   if(rand()>chance)continue;const w=(airport?78:urban?82:residential?65:72)+rand()*(airport?62:urban?58:residential?44:54),h=(airport?62:urban?68:residential?52:58)+rand()*(airport?42:urban?48:residential?38:46),cx=bx+(col+.5)*spanX+(rand()-.5)*18,cy=by+(row+.5)*spanY+(rand()-.5)*18,lot={x:cx-w/2,y:cy-h/2,w,h};
   if(lot.x<bx||lot.y<by||lot.x+lot.w>ex||lot.y+lot.h>ey)continue;
-   const occupied=overlaps(lot,{x:890,y:640,w:240,h:208})||G.world.buildings.some(b=>overlaps(lot,b.assetBounds||b,24))||G.world.houseLots.some(home=>overlaps(lot,home,12))||G.world.futurePlots.some(p=>p.reserved&&overlaps(lot,p,16))||G.world.lakes.some(l=>overlaps(lot,l,20))||G.world.roadPaths.some(path=>path.points.slice(1).some((q,i)=>segmentDistance(cx,cy,path.points[i],q)<path.width/2+Math.hypot(w,h)*.53));
+   const occupied=overlaps(lot,{x:890,y:640,w:240,h:208})||G.world.buildings.some(b=>overlaps(lot,b.assetBounds||b,24))||G.world.houseLots.some(home=>overlaps(lot,home,12))||G.world.futurePlots.some(p=>p.reserved&&overlaps(lot,p,16))||G.world.lakes.some(l=>overlaps(lot,l,20))||G.world.metropolitanPrecincts.some(p=>overlaps(lot,p,30))||G.world.roadPaths.some(path=>path.points.slice(1).some((q,i)=>segmentDistance(cx,cy,path.points[i],q)<path.width/2+Math.hypot(w,h)*.53));
   if(occupied||G.world.cityLots.some(other=>overlaps(lot,other,18)))continue;
   const central=style==='modern-civic',floors=central?9+Math.floor(rand()*14):urban?2+Math.floor(rand()*7):residential?1+Math.floor(rand()*3):airport?1+Math.floor(rand()*3):1+Math.floor(rand()*4),types=central?['office','apartment','hotel','office']:urban?['shop','office','apartment','hotel','retail']:residential?['villa','apartment','house','villa']:airport?['warehouse','hotel','office']:['shop','office','warehouse','apartment'];
   G.world.cityLots.push({id:`city-${xi}-${yi}-${row}-${col}`,...lot,floors,district,style,type:types[Math.floor(rand()*types.length)],seed:Math.floor(rand()*2147483647),roof:Math.floor(rand()*4)});
