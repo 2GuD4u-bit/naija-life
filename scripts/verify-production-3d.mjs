@@ -88,6 +88,38 @@ try {
       throw new Error(mode + ': the player could not move from the game start position: ' + JSON.stringify(movement));
     }
 
+    const interaction = await page.evaluate(() => {
+      const phoneButton = document.querySelector('.bottom-nav [data-panel="phone"]');
+      phoneButton?.click();
+      const phoneLauncher = document.querySelector('#panel-content .phone-device');
+      const appCount = document.querySelectorAll('#panel-content .phone-app').length;
+      const screens = {};
+      for (const tab of ['jobs','messages','contacts','people','salary','events','games','nollywood','sports','food','bank','boutique','finance','houses','vehicles','invite','health','invest','business','family','government-governor','police','ads','settings']) {
+        window.Game.launchApp(tab);
+        const content = document.querySelector('#panel-content .phone-app-content');
+        screens[tab] = !!content && content.textContent.trim().length > 0;
+      }
+      document.querySelector('.bottom-nav [data-panel="inventory"]')?.click();
+      const bag = document.getElementById('panel-content')?.textContent || '';
+      document.querySelector('.bottom-nav [data-panel="map"]')?.click();
+      const mapVisible = !!document.querySelector('#panel-content #city-map-svg');
+      const zoomBefore = window.Game.view.zoom;
+      document.querySelector('[data-world-zoom="in"]')?.click();
+      const zoomAfter = window.Game.view.zoom;
+      const api = window.Game.world.threeWorld;
+      window.Game.state.hour = 12; window.Game.state.minute = 0; api.render();
+      const dayColor = api.scene.background.getHexString();
+      window.Game.state.hour = 23; window.Game.state.minute = 0; api.render();
+      const nightColor = api.scene.background.getHexString();
+      return { phoneLauncher: !!phoneLauncher, appCount, screens, bagHasPhone: bag.includes('Phone'), bagHasWater: bag.includes('Water'), mapVisible, zoomChanged: zoomAfter > zoomBefore, dayColor, nightColor, lightingChanges: dayColor !== nightColor, errorBanner: document.getElementById('runtime-error')?.textContent || '' };
+    });
+    const missingScreens = Object.entries(interaction.screens).filter(([, rendered]) => !rendered).map(([name]) => name);
+    if (!interaction.phoneLauncher || interaction.appCount < 20 || missingScreens.length ||
+        !interaction.bagHasPhone || !interaction.bagHasWater || !interaction.mapVisible ||
+        !interaction.zoomChanged || !interaction.lightingChanges || interaction.errorBanner) {
+      throw new Error(mode + ': phone, bag, navigation, camera, or day/night UI check failed: ' + JSON.stringify({ interaction, missingScreens }));
+    }
+
     const result = await page.evaluate(movement => {
       const api = window.Game.world.threeWorld;
       const canvas = api?.renderer?.domElement;
@@ -114,6 +146,7 @@ try {
         },
         customBuildersReady: ['car-stand', 'restaurant-property', 'fashion-flagship', 'airport-terminal', 'mosque', 'retail-complex', 'transport-terminal'].every(name => typeof builders[name] === 'function'),
         playerMoved: movement.before[0] !== movement.after[0] || movement.before[1] !== movement.after[1],
+        phoneAndBagVerified: true,
         visible: canvas ? getComputedStyle(canvas).display !== 'none' : false
       };
     }, movement);
@@ -159,4 +192,3 @@ try {
 } finally {
   await browser.close();
 }
-
