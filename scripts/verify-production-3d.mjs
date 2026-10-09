@@ -106,7 +106,7 @@ try {
         districts: world.districts?.length || 0,
         locations: world.buildings?.length || 0,
         destinations: {
-          abujacar: names.has('ABUJACAR CAR STAND'),
+          abujacar: names.has('ABUJACAR CAR DEALERSHIP'),
           devoltMould: names.has('Devolt Mould Flagship'),
           airport: names.has('Nnamdi Azikiwe International Airport'),
           restaurants: ['Blucabana Restaurant', 'The Vue', 'Cilantro Abuja', 'A Class Restaurant', 'Istanbul Restaurant & Café', 'Vibes by Ann’s', 'City View Restaurant'].filter(name => names.has(name)).length,
