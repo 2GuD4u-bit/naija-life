@@ -190,7 +190,7 @@ try {
       throw new Error(mode + ': the live page did not produce a visible 3D frame: ' + JSON.stringify(result));
     }
     if (result.dimensions[0] !== 14400 || result.dimensions[1] !== 9600 || result.districts < 20 ||
-        result.cityLots !== 3568 || result.residentialLots !== 320 || result.roadSegments !== 576 || result.mappedCityMaterials < 1 || result.realPlantInstances < 1 ||
+        result.cityLots !== 3568 || result.residentialLots !== 320 || result.roadSegments !== 576 || result.mappedCityMaterials < 1 ||
         (result.stats.cityLots || 0) < 500 || (result.stats.roundabouts || 0) < 10 || (result.stats.trees || 0) < 15 ||
         !result.destinations.abujacar || !result.destinations.devoltMould || !result.destinations.airport ||
         result.destinations.restaurants !== 7 || result.destinations.carStands !== 3 ||
@@ -247,17 +247,18 @@ try {
           if (object.userData?.type === 'dealer') dealer = object;
         });
         if (!dealer) return { found: false };
-        let meshes = 0, lights = 0, vehicles = 0, signs = 0, bevelledBodies = 0;
+        let meshes = 0, lights = 0, vehicles = 0, signs = 0, bevelledBodies = 0, realPlants = 0;
         dealer.traverse(object => {
           if (object.isMesh) meshes++;
           if (object.isMesh && object.geometry?.type === 'ExtrudeGeometry') bevelledBodies++;
           if (object.isLight) lights++;
           if (object.userData?.vehicleKind) vehicles++;
           if (object.isSprite) signs++;
+          if (object.isInstancedMesh && object.name === 'Poly Haven CC0 sorrel planting') realPlants += object.count;
         });
-        return { found: true, meshes, lights, vehicles, signs, bevelledBodies, bounds: dealer.userData.name };
+        return { found: true, meshes, lights, vehicles, signs, bevelledBodies, realPlants, bounds: dealer.userData.name };
       });
-      if (!dealershipScene.found || dealershipScene.meshes < 100 || dealershipScene.vehicles < 18 || dealershipScene.signs < 4 || dealershipScene.bevelledBodies < 18) {
+      if (!dealershipScene.found || dealershipScene.meshes < 100 || dealershipScene.vehicles < 18 || dealershipScene.signs < 4 || dealershipScene.bevelledBodies < 18 || dealershipScene.realPlants < 1) {
         throw new Error('ABUJACAR property did not build its detailed 3D showroom and compound: ' + JSON.stringify({ dealership, dealershipScene }));
       }
       await page.screenshot({ path: `${screenshotDir}/abujacar-gameplay-overview.png`, timeout: 90000 });
