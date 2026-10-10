@@ -37,7 +37,7 @@ const defs=[
  {id:'b3',name:'Central Police Post',icon:'🚔',type:'police',x:1655,y:406,w:55,h:44,desc:'Pay a fine or turn yourself in.',asset:'police-post'},
  {id:'b4',name:'Civic Centre',icon:'🏛️',type:'government',x:450,y:908,w:58,h:46,desc:'Public services and city notices.',asset:'civic-centre'},
  {id:'b5',name:'Oja Kitchen',icon:'🍲',type:'restaurant',x:710,y:908,w:48,h:40,desc:'Grab a hot plate of jollof rice.',asset:'restaurant'},
- {id:'abujacar_car_stand',name:'ABUJACAR CAR DEALERSHIP',icon:'🚘',type:'dealer',x:8090,y:3980,w:310,h:170,desc:'A flagship luxury vehicle dealership with sales, trade-in, finance, and service facilities.',asset:'abujacar-showroom',district:'idu-rail',rotation:0,scale:1,interior:{type:'showroom'},roadConnections:['idu-service-road'],interactionPoint:{x:8280,y:3880},collision:{x:8090,y:3980,w:310,h:170},lod:{high:650,medium:1600,low:3000}},
+ {id:'abujacar_car_stand',name:'ABUJACAR CAR DEALERSHIP',icon:'🚘',type:'dealer',x:8070,y:3890,w:420,h:340,desc:'A flagship luxury vehicle dealership with sales, trade-in, finance, and service facilities.',asset:'abujacar-showroom',district:'idu-rail',rotation:0,scale:1,interior:{type:'showroom'},roadConnections:['idu-service-road'],interactionPoint:{x:8280,y:3874},collision:{x:8070,y:3890,w:420,h:340},lod:{high:650,medium:1600,low:3000}},
  {id:'b7',name:'Fuel Point',icon:'⛽',type:'fuel',x:1348,y:908,w:50,h:38,desc:'Fill your tank.',asset:'fuel-station'},
  {id:'b8',name:'Unity Apartments',icon:'🏢',type:'apartment',x:1657,y:908,w:62,h:54,desc:'Your affordable room is here.',asset:'apartment'},
  {id:'b9',name:'Northside Gym',icon:'🏋️',type:'gym',x:450,y:1410,w:50,h:40,desc:'Train fitness and improve your mood.',asset:'gym'},
@@ -101,19 +101,19 @@ defs.forEach(G.world.registerLocation);
 G.world.locationsById=Object.fromEntries(G.world.buildings.map(b=>[b.id,b]));
 G.world.getLocation=function(id){return G.world.locationsById[id]||null};
 G.world.repositionLocation=function(id,patch={}){const b=G.world.getLocation(id);if(!b)return false;const previous={x:b.x,y:b.y,w:b.w,h:b.h,assetBounds:b.assetBounds?{...b.assetBounds}:null,interactionPoint:b.interactionPoint?{...b.interactionPoint}:null},oldCollision=b.collision&&typeof b.collision==='object'?{...b.collision}:null,x=Number.isFinite(patch.x)?patch.x:b.x,y=Number.isFinite(patch.y)?patch.y:b.y,w=Number.isFinite(patch.w)?patch.w:b.w,h=Number.isFinite(patch.h)?patch.h:b.h,dx=x-previous.x,dy=y-previous.y;b.x=x;b.y=y;b.w=w;b.h=h;b.bounds={x,y,w,h};if(oldCollision)b.collision={...oldCollision,x:x+(oldCollision.x-previous.x),y:y+(oldCollision.y-previous.y),w:oldCollision.w*(w/previous.w),h:oldCollision.h*(h/previous.h)};if(id==='abujacar_car_stand'&&G.world.carDealership){const site=G.world.carDealership;site.lot.x+=dx;site.lot.y+=dy;site.showroom.x+=dx;site.showroom.y+=dy;site.workshop.x+=dx;site.workshop.y+=dy;for(const car of site.cars){car.x+=dx;car.y+=dy}b.assetBounds={...site.lot}}else if(previous.assetBounds){b.assetBounds={...previous.assetBounds,x:previous.assetBounds.x+dx,y:previous.assetBounds.y+dy,w:previous.assetBounds.w*(w/previous.w),h:previous.assetBounds.h*(h/previous.h)}}if(patch.rotation!==undefined)b.rotation=Number(patch.rotation)||0;if(patch.scale!==undefined)b.scale=Number(patch.scale)||1;if(patch.interactionPoint)b.interactionPoint={...patch.interactionPoint};else if(id==='abujacar_car_stand'&&G.world.carDealership){const lot=G.world.carDealership.lot,cx=lot.x+lot.w/2,cy=lot.y+lot.h/2,dx=0,dy=-lot.h/2-20,c=Math.cos(b.rotation),s=Math.sin(b.rotation),co=Math.abs(c),si=Math.abs(s),bw=(lot.w*co+lot.h*si)*b.scale,bh=(lot.w*si+lot.h*co)*b.scale;b.interactionPoint={x:cx+(dx*c+dy*s)*b.scale,y:cy+(-dx*s+dy*c)*b.scale};b.assetBounds={x:cx-bw/2,y:cy-bh/2,w:bw,h:bh}}else if(previous.interactionPoint)b.interactionPoint={...previous.interactionPoint,x:previous.interactionPoint.x+dx,y:previous.interactionPoint.y+dy};else b.interactionPoint={x:x+w/2,y:y+h+12};G.world.threeWorld?.refreshLocation?.(b,previous);return b};
-G.world.carDealership={id:'abujacar_car_stand',lot:{x:8110,y:3920,w:340,h:280,gateWidth:50},showroom:{x:8210,y:3964,w:140,d:92},workshop:{x:8390,y:3975,w:60,d:70},cars:[
- {id:'abujacar-showroom-suv-01',name:'Showroom Executive SUV',x:8240,y:3992,color:'#161c22',kind:'suv',interior:true},
- {id:'abujacar-showroom-sedan-01',name:'Showroom Luxury Sedan',x:8266,y:3992,color:'#e5e1d5',kind:'sedan',interior:true},
- {id:'abujacar-showroom-sport-01',name:'Showroom Grand Coupe',x:8292,y:3992,color:'#a52e2c',kind:'sport',interior:true},
- {id:'abujacar-showroom-suv-02',name:'Showroom Premium 4x4',x:8240,y:4022,color:'#384950',kind:'suv',interior:true},
- {id:'abujacar-showroom-sedan-02',name:'Showroom Executive Saloon',x:8266,y:4022,color:'#746954',kind:'sedan',interior:true},
- {id:'abujacar-showroom-suv-03',name:'Showroom Black SUV',x:8292,y:4022,color:'#101519',kind:'suv',interior:true},
- {id:'abujacar-forecourt-01',name:'Forecourt Black SUV',x:8145,y:4068,color:'#12171d',kind:'suv'},
- {id:'abujacar-forecourt-02',name:'Forecourt White SUV',x:8188,y:4068,color:'#e3e1d9',kind:'suv'},
- {id:'abujacar-forecourt-03',name:'Forecourt Graphite SUV',x:8231,y:4068,color:'#394650',kind:'suv'},
- {id:'abujacar-forecourt-04',name:'Forecourt Executive Sedan',x:8274,y:4068,color:'#d4d7d4',kind:'sedan'},
- {id:'abujacar-forecourt-05',name:'Forecourt Sport Coupe',x:8317,y:4068,color:'#a93430',kind:'sport'},
- {id:'abujacar-forecourt-06',name:'Forecourt Midnight SUV',x:8360,y:4068,color:'#17202a',kind:'suv'},
+G.world.carDealership={id:'abujacar_car_stand',lot:{x:8070,y:3890,w:420,h:340,gateWidth:58},showroom:{x:8168,y:3930,w:224,d:120},workshop:{x:8400,y:3970,w:78,d:80},cars:[
+ {id:'abujacar-showroom-suv-01',name:'Showroom Executive SUV',x:8218,y:3968,color:'#161c22',kind:'suv',interior:true},
+ {id:'abujacar-showroom-sedan-01',name:'Showroom Luxury Sedan',x:8280,y:3968,color:'#e5e1d5',kind:'sedan',interior:true},
+ {id:'abujacar-showroom-sport-01',name:'Showroom Grand Coupe',x:8342,y:3968,color:'#a52e2c',kind:'sport',interior:true},
+ {id:'abujacar-showroom-suv-02',name:'Showroom Premium 4x4',x:8218,y:4000,color:'#384950',kind:'suv',interior:true},
+ {id:'abujacar-showroom-sedan-02',name:'Showroom Executive Saloon',x:8280,y:4000,color:'#746954',kind:'sedan',interior:true},
+ {id:'abujacar-showroom-suv-03',name:'Showroom Black SUV',x:8342,y:4000,color:'#101519',kind:'suv',interior:true},
+ {id:'abujacar-forecourt-01',name:'Forecourt Black SUV',x:8180,y:4090,color:'#12171d',kind:'suv'},
+ {id:'abujacar-forecourt-02',name:'Forecourt White SUV',x:8220,y:4090,color:'#e3e1d9',kind:'suv'},
+ {id:'abujacar-forecourt-03',name:'Forecourt Graphite SUV',x:8260,y:4090,color:'#394650',kind:'suv'},
+ {id:'abujacar-forecourt-04',name:'Forecourt Executive Sedan',x:8300,y:4090,color:'#d4d7d4',kind:'sedan'},
+ {id:'abujacar-forecourt-05',name:'Forecourt Sport Coupe',x:8340,y:4090,color:'#a93430',kind:'sport'},
+ {id:'abujacar-forecourt-06',name:'Forecourt Midnight SUV',x:8380,y:4090,color:'#17202a',kind:'suv'},
  {id:'abujacar-canopy-01',name:'Canopy Black SUV',x:8138,y:4085,color:'#131920',kind:'suv'},
  {id:'abujacar-canopy-02',name:'Canopy Silver SUV',x:8162,y:4085,color:'#c8ccca',kind:'suv'},
  {id:'abujacar-canopy-03',name:'Canopy Blue SUV',x:8138,y:4120,color:'#304758',kind:'suv'},
@@ -209,10 +209,10 @@ G.world.cityLots=[];G.world.cityLotsByChunk=Object.create(null);
 for(let xi=0;xi<G.world.roadX.length-1;xi++)for(let yi=0;yi<G.world.roadY.length-1;yi++){
  const x0=G.world.roadX[xi]+(xi%5===0?15:xi%2===0?10:6.5)+15,x1=G.world.roadX[xi+1]-((xi+1)%5===0?15:(xi+1)%2===0?10:6.5)-15;
  const y0=G.world.roadY[yi]+(yi%4===0?15:yi%2===0?10:6.5)+15,y1=G.world.roadY[yi+1]-((yi+1)%4===0?15:(yi+1)%2===0?10:6.5)-15;
- const districtInfo=G.world.districts.find(d=>{const r=d.bounds;return (x0+x1)/2>=r.x&&(x0+x1)/2<r.x+r.w&&(y0+y1)/2>=r.y&&(y0+y1)/2<r.y+r.h}),district=districtInfo?.id||'wuse-central',style=districtInfo?.style||'mixed-urban',bx=x0,ex=x1,by=y0,ey=y1,rand=cityRandom(xi*73856093^yi*19349663),urban=['modern-civic','mixed-urban','commercial-residential','mixed-modern','industrial-rail','suburban-centre'].includes(style),residential=style.includes('residential')||style.includes('estate'),airport=style==='airport-corridor',chance=urban ? .87 : residential ? .57 : airport ? .38 : .56;
- const spanX=(ex-bx)/3,spanY=(ey-by)/3;
- for(let row=0;row<3;row++)for(let col=0;col<3;col++){
-  if(rand()>chance)continue;const w=(airport?78:urban?82:residential?65:72)+rand()*(airport?62:urban?58:residential?44:54),h=(airport?62:urban?68:residential?52:58)+rand()*(airport?42:urban?48:residential?38:46),cx=bx+(col+.5)*spanX+(rand()-.5)*18,cy=by+(row+.5)*spanY+(rand()-.5)*18,lot={x:cx-w/2,y:cy-h/2,w,h};
+ const districtInfo=G.world.districts.find(d=>{const r=d.bounds;return (x0+x1)/2>=r.x&&(x0+x1)/2<r.x+r.w&&(y0+y1)/2>=r.y&&(y0+y1)/2<r.y+r.h}),district=districtInfo?.id||'wuse-central',style=districtInfo?.style||'mixed-urban',bx=x0,ex=x1,by=y0,ey=y1,rand=cityRandom(xi*73856093^yi*19349663),urban=['modern-civic','mixed-urban','commercial-residential','mixed-modern','industrial-rail','suburban-centre'].includes(style),residential=style.includes('residential')||style.includes('estate'),airport=style==='airport-corridor',chance=urban ? .92 : residential ? .68 : airport ? .48 : .64;
+ const parcels=4,spanX=(ex-bx)/parcels,spanY=(ey-by)/parcels;
+ for(let row=0;row<parcels;row++)for(let col=0;col<parcels;col++){
+  if(rand()>chance)continue;const w=(airport?68:urban?72:residential?56:64)+rand()*(airport?54:urban?52:residential?39:48),h=(airport?56:urban?60:residential?46:52)+rand()*(airport?38:urban?43:residential?34:40),cx=bx+(col+.5)*spanX+(rand()-.5)*12,cy=by+(row+.5)*spanY+(rand()-.5)*12,lot={x:cx-w/2,y:cy-h/2,w,h};
   if(lot.x<bx||lot.y<by||lot.x+lot.w>ex||lot.y+lot.h>ey)continue;
    const occupied=overlaps(lot,{x:890,y:640,w:240,h:208})||G.world.buildings.some(b=>overlaps(lot,b.assetBounds||b,24))||G.world.houseLots.some(home=>overlaps(lot,home,12))||G.world.futurePlots.some(p=>p.reserved&&overlaps(lot,p,16))||G.world.lakes.some(l=>overlaps(lot,l,20))||G.world.metropolitanPrecincts.some(p=>overlaps(lot,p,30))||G.world.roadPaths.some(path=>path.points.slice(1).some((q,i)=>segmentDistance(cx,cy,path.points[i],q)<path.width/2+Math.hypot(w,h)*.53));
   if(occupied||G.world.cityLots.some(other=>overlaps(lot,other,18)))continue;
