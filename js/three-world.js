@@ -1,6 +1,3 @@
-Warning: truncated output (original token count: 25226)
-Total output lines: 561
-
 let THREE=null;
 
 const clamp=(n,a,b)=>Math.max(a,Math.min(b,n));
@@ -219,7 +216,155 @@ export async function createCity3D(G,diagnostic=()=>{}){
     for(let c=0;c<cols;c++){const wx=fx-fw/2+5+(c+.5)*(fw-10)/cols;for(const side of [-1,1])faces.push([wx,fy,fz+side*(fd/2+.23),windowW,windowH,.32,rand()>.31,true])}
     for(let c=0;c<rows;c++){const wz=fz-fd/2+5+(c+.5)*(fd-10)/rows;for(const side of [-1,1])faces.push([fx+side*(fw/2+.23),fy,wz,.32,windowH,windowD,rand()>.31,false])}
     if(f>0){const by=ground+f*floorH;for(const side of [-1,1]){dummy.position.set(fx,by,fz+side*(fd/2+.33));dummy.scale.set(fw,.2,.36);dummy.updateMatrix();bands.setMatrixAt(bandIndex,dummy.matrix);bands.setColorAt(bandIndex++,color(trimColor));dummy.position.set(fx+side*(fw/2+.33),by,fz);dummy.scale.set(.36,.2,fd);dummy.updateMatrix();bands.setMatrixAt(bandIndex,dummy.matrix);bands.setColorAt(bandIndex++,color(trimColor))}}
-    if(residential&&f>0&&balconyIndex<balconyCapacity&&((!highrise&&f<=2)||(highrise&&f%2===0))){const bx=fx+(f%…5226 tokens truncated…2,false);
+    if(residential&&f>0&&balconyIndex<balconyCapacity&&((!highrise&&f<=2)||(highrise&&f%2===0))){const bx=fx+(f%2?-.18:.18)*fw,bz=fz-fd/2-1.45,bw=Math.min(7.5,fw*.34);dummy.position.set(bx,ground+f*floorH+.3,bz);dummy.scale.set(bw,.32,2.8);dummy.updateMatrix();balconies.setMatrixAt(balconyIndex,dummy.matrix);dummy.position.set(bx,ground+f*floorH+1,bz-1.22);dummy.scale.set(bw,.78,.18);dummy.updateMatrix();balconyRails.setMatrixAt(balconyIndex++,dummy.matrix)}
+   }
+   // Recessed framed glazing, rather than painted-on window squares.
+   for(const [wx,wy,wz,ww,wh,wd,lit,frontFace] of faces){const offsetX=frontFace?0:Math.sign(wx-x)*.19,offsetZ=frontFace?Math.sign(wz-z)*.19:0;dummy.position.set(wx,wy,wz);dummy.scale.set(frontFace?ww+.62:.32,wh+.62,frontFace?.32:wd+.62);dummy.updateMatrix();windowFrames.setMatrixAt(frameIndex,dummy.matrix);dummy.position.set(wx+offsetX,wy,wz+offsetZ);dummy.scale.set(frontFace?ww:.13,wh,frontFace?.13:wd);dummy.updateMatrix();if(lit)windowsOn.setMatrixAt(onIndex++,dummy.matrix);else windowsOff.setMatrixAt(offIndex++,dummy.matrix);frameIndex++}
+   // Four subtle vertical piers and a deep shop canopy give each block a legible facade.
+   const featureW=highrise?towerW:w,featureD=highrise?towerD:d,featureX=x+towerX,featureZ=z+towerZ;for(const sx of [-1,1])for(const sz of [-1,1]){dummy.position.set(featureX+sx*(featureW/2+.2),ground+height/2,featureZ+sz*(featureD/2+.2));dummy.scale.set(.36,height,.36);dummy.updateMatrix();fins.setMatrixAt(finIndex,dummy.matrix);fins.setColorAt(finIndex++,color(trimColor))}for(const sx of [-1,1])for(const sz of [-1,1]){dummy.position.set(featureX+sx*featureW*.25,ground+height/2,featureZ+sz*(featureD/2+.25));dummy.scale.set(.24,height,.26);dummy.updateMatrix();fins.setMatrixAt(finIndex,dummy.matrix);fins.setColorAt(finIndex++,color(trimColor))}
+   if(['shop','market','restaurant','retail','club','hotel'].includes(b.type)){dummy.position.set(x,ground+3.65,z-d/2-1.05);dummy.scale.set(Math.min(w*.86,52),.62,2.4);dummy.updateMatrix();awnings.setMatrixAt(awningIndex,dummy.matrix);awnings.setColorAt(awningIndex++,color(['#bc8052','#637f84','#b88d55','#9b6b5d'][Math.floor(rand()*4)]))}
+  });
+  for(const mesh of [pads,bodyLow,bodyTower,roof,roofFeatures,parapets,bands,fins,windowFrames,windowsOn,windowsOff,balconies,balconyRails,awnings,units])mesh.instanceMatrix.needsUpdate=true;
+  for(const mesh of [pads,bodyLow,bodyTower,roof,roofFeatures,parapets,bands,fins,units,awnings])if(mesh.instanceColor)mesh.instanceColor.needsUpdate=true;
+  parapets.count=parapetIndex;bands.count=bandIndex;fins.count=finIndex;windowFrames.count=frameIndex;windowsOn.count=onIndex;windowsOff.count=offIndex;balconies.count=balconyIndex;balconyRails.count=balconyIndex;awnings.count=awningIndex;units.count=unitIndex;
+  roofFeatures.count=roofFeatureIndex;group.add(pads,bodyLow,bodyTower,roof,roofFeatures,parapets,bands,fins,windowFrames,windowsOff,windowsOn,balconies,balconyRails,awnings,units);
+ }
+ function roundaboutAsset(group,r){const x=r.x,z=r.y,ground=terrainY(x,z),radius=r.radius||42,asphalt=new THREE.Mesh(new THREE.CylinderGeometry(radius,radius,.22,28),mats.road);asphalt.position.set(x,ground+.14,z);group.add(asphalt);const island=new THREE.Mesh(new THREE.CylinderGeometry(radius*.56,radius*.56,1.2,24),mats.park);island.position.set(x,ground+.72,z);group.add(island);const curb=new THREE.Mesh(new THREE.TorusGeometry(radius*.58,1.15,5,28),mats.roadEdge);curb.rotation.x=-Math.PI/2;curb.position.set(x,ground+1.36,z);group.add(curb);const lane=new THREE.InstancedMesh(boxGeometry(4,.12,.5),mats.white,20);for(let i=0;i<20;i++){const a=i/20*Math.PI*2;dummyRoundabout.position.set(x+Math.cos(a)*radius*.79,ground+.3,z+Math.sin(a)*radius*.79);dummyRoundabout.rotation.y=-a;dummyRoundabout.updateMatrix();lane.setMatrixAt(i,dummyRoundabout.matrix)}group.add(lane);for(let i=0;i<5;i++){const a=i/5*Math.PI*2,tx=x+Math.cos(a)*radius*.25,tz=z+Math.sin(a)*radius*.25;const shrub=new THREE.Mesh(new THREE.DodecahedronGeometry(2.8,0),mats.leaf2);shrub.position.set(tx,ground+3.5,tz);group.add(shrub)}if(r.monument){const pedestal=new THREE.Mesh(new THREE.CylinderGeometry(4,5,3,8),mats.concrete);pedestal.position.set(x,ground+2.8,z);group.add(pedestal);const spire=new THREE.Mesh(new THREE.ConeGeometry(2.2,12,7),mat('#d8ae4f',.46,.26));spire.position.set(x,ground+10,z);group.add(spire)} }
+ const dummyRoundabout=new THREE.Object3D();
+ // A raised, lit crossing carries the existing Jabi approach over the lake as a real 3D bridge.
+ // Build only the part belonging to this terrain chunk so streaming and culling stay intact.
+ function jabiLakeBridge(group,cx,cz){
+  const x0=6200,x1=7220,z=1238,halfWidth=17;if(cz!==800||cx+chunkSize<=x0||cx>=x1)return;
+  const start=Math.max(x0,cx),end=Math.min(x1,cx+chunkSize),span=end-start,segments=Math.ceil(span/18),deck=new THREE.InstancedMesh(boxGeometry(span/segments,.8,halfWidth*2),mat('#414b50',.83,.16),segments),lane=new THREE.InstancedMesh(boxGeometry(8,.09,.38),mats.line,Math.ceil(span/34)),rails=new THREE.InstancedMesh(boxGeometry(18,.32,.55),mat('#b8b8ad',.5,.55),Math.ceil(span/18)*2),dummy=new THREE.Object3D();let railIndex=0,laneIndex=0;
+  const deckY=x=>terrainY(x,z)+8+5*Math.sin(Math.PI*(x-x0)/(x1-x0));
+  for(let i=0;i<segments;i++){const x=start+(i+.5)*span/segments;dummy.position.set(x,deckY(x),z);dummy.updateMatrix();deck.setMatrixAt(i,dummy.matrix);for(const side of [-1,1]){dummy.position.set(x,deckY(x)+.45,z+side*(halfWidth-.4));dummy.updateMatrix();rails.setMatrixAt(railIndex++,dummy.matrix)}}
+  for(let x=start+10;x<end-4;x+=34){dummy.position.set(x,deckY(x)+.47,z);dummy.updateMatrix();lane.setMatrixAt(laneIndex++,dummy.matrix)}deck.count=segments;rails.count=railIndex;lane.count=laneIndex;group.add(deck,lane,rails);
+  const piers=new THREE.InstancedMesh(boxGeometry(7,1,8),mat('#8c908c',.75,.08),Math.ceil(span/110));let pierIndex=0;for(let x=Math.ceil(start/110)*110;x<end;x+=110){const ground=terrainY(x,z),top=deckY(x)-.45,height=Math.max(2,top-ground);dummy.position.set(x,ground+height/2,z);dummy.scale.set(1,height,1);dummy.updateMatrix();piers.setMatrixAt(pierIndex++,dummy.matrix)}piers.count=pierIndex;group.add(piers);
+  const lamps=new THREE.InstancedMesh(boxGeometry(.5,7,.5),mat('#535e60',.58,.34),Math.ceil(span/150)*2),heads=new THREE.InstancedMesh(boxGeometry(3,.28,.7),mats.lamp,Math.ceil(span/150)*2);let lampIndex=0;for(let x=Math.ceil(start/150)*150;x<end;x+=150)for(const side of [-1,1]){dummy.position.set(x,deckY(x)+4,z+side*(halfWidth-3));dummy.updateMatrix();lamps.setMatrixAt(lampIndex,dummy.matrix);dummy.position.set(x+2,deckY(x)+7.5,z+side*(halfWidth-3));dummy.updateMatrix();heads.setMatrixAt(lampIndex++,dummy.matrix)}lamps.count=lampIndex;heads.count=lampIndex;group.add(lamps,heads);
+ }
+ function constructionSite(group,b){const lotW=188,lotD=152,site=new THREE.Group();site.position.set(b.x+b.w/2,terrainY(b.x,b.y),b.y+b.h/2);flat(site,0,.1,0,lotW,lotD,mat('#b58e5e'));flat(site,0,.32,0,lotW-12,lotD-12,mat('#c3a06a'));
+  const fence=mat('#175968');for(const z of [-lotD/2+4,lotD/2-4])for(let x=-lotW/2+4;x<=lotW/2-4;x+=8){if(z>0&&Math.abs(x)<18)continue;box(site,x,.35,z,.65,2.4,.65,fence)}
+  for(const x of [-lotW/2+4,lotW/2-4])for(let z=-lotD/2+4;z<=lotD/2-4;z+=8)box(site,x,.35,z,.65,2.4,.65,fence);
+  for(const z of [-lotD/2+4,lotD/2-4]){const gap=z>0?18:0,start=-lotW/2+7,end=lotW/2-7;for(let x=start;x<end;x+=8){if(z>0&&x>=-gap&&x<=gap)continue;box(site,x+4,1,z,8,.18,.28,mat('#3c7881'));box(site,x+4,1.8,z,8,.16,.28,mat('#568a89'))}}
+  for(const x of [-lotW/2+4,lotW/2-4])for(const z of [-lotD/2+8,0,lotD/2-8]){box(site,x,2.8,z,1,3,1,mat('#c7b087'));const lamp=new THREE.PointLight('#ffe2a7',18,20);lamp.position.set(x,6,z);site.add(lamp)}
+  const bw=78,bd=58,floor=4.1;flat(site,0,.55,0,bw+7,bd+7,mat('#777a74'));
+  for(let level=0;level<5;level++){
+   const y=.8+level*floor;flat(site,0,y,0,bw,bd,mat(level===4?'#858981':'#969a92'));
+   for(const x of [-bw/2+2,bw/2-2])for(const z of [-bd/2+2,bd/2-2])box(site,x,y,z,1.15,floor,.95,mat('#b2b2a8'));
+   for(const x of [-bw/2+2,0,bw/2-2])for(const z of [-bd/2+2,bd/2-2])box(site,x,y,z,.95,floor,.95,mat('#aaa99f'));
+   if(level===1||level===2){box(site,-bw*.29,y+1,-bd/2, bw*.37,2,1.1,mat('#768780'));box(site,bw*.3,y+1,bd*.18,bw*.3,2,1.1,mat('#667b82'))}
+  }
+  const scaffold=mat('#b36636');for(const z of [-bd/2-3,bd/2+3])for(let x=-bw/2-4;x<=bw/2+4;x+=7){box(site,x,.8,z,.3,18,.3,scaffold);for(let y=4;y<18;y+=4)box(site,x,y,z,6,.22,.22,scaffold)}
+  for(let y=4;y<20;y+=4)for(let x=-bw/2-4;x<bw/2+4;x+=14)box(site,x+7,y,-bd/2-3,13,.18,.18,scaffold);
+  for(const x of [-bw*.32,-bw*.04,bw*.3])for(let i=0;i<3;i++){box(site,x+i*.75,20,bd*.24,.16,3,.16,mat('#776c59'));box(site,x-.5,22,bd*.24,1.3,.16,.16,mat('#776c59'))}
+  // A 50 m tower crane with lattice jib, hoist cable, operator cab and hook.
+  const craneX=-lotW*.31,craneZ=-lotD*.18,crane=mat('#d2a12e');for(const x of [-1.3,1.3])for(const z of [-1.3,1.3])box(site,craneX+x,.4,craneZ+z,.28,48,.28,crane);
+  for(let y=3;y<48;y+=4){for(const z of [-1.3,1.3]){const brace=box(site,craneX,y,z,2.1,.2,.2,crane);brace.rotation.z=.63;const other=box(site,craneX,y+1.7,z,2.1,.2,.2,crane);other.rotation.z=-.63}}
+  box(site,craneX,48,craneZ,5,1,4,mat('#8a692f'));box(site,craneX,49,craneZ,6,1.1,5,mat('#9bb4b7'));
+  for(const x of [-43,43])box(site,craneX+x,50,craneZ,1,1,1,crane);for(let x=-42;x<44;x+=7){box(site,craneX+x,51,craneZ,7,.4,.36,crane);const diagonal=box(site,craneX+x+3.5,51,craneZ,7,.22,.22,crane);diagonal.rotation.z=x%14?-.5:.5}
+  box(site,craneX-27,50,craneZ,18,1,2.5,crane);box(site,craneX-27,51,craneZ,1,.4,3,crane);
+  const cable=box(site,craneX+20,29,craneZ,.12,21,.12,mat('#343a39'));box(site,craneX+20,18,craneZ,.5,1.5,.5,mat('#232829'));
+  // Rebar cage, site hoist, concrete mixer and stacked materials.
+  for(let i=0;i<9;i++)box(site,-26+i*6,.9,bd*.37,4,1.5,3,mat(i%2?'#9a704c':'#bd9568'));
+  for(const x of [-35,35])for(const z of [-20,0,20]){box(site,x,.8,z,1,7,1,mat('#6d5140'));box(site,x,4.5,z,3,.35,3,mat('#b48a57'))}
+  carModel(site,-61,.0,'#c24d3f','bus');const tag=label('BUILDING SITE · UNDER CONSTRUCTION','#f4ead8','#37362f',15);tag.scale.set(58,11,1);tag.position.set(0,6,lotD/2+5);site.add(tag);group.add(site);return site;
+ }
+ function estateEntrance(group,b){const g=new THREE.Group(),w=42,d=22;g.position.set(b.x+b.w/2,terrainY(b.x,b.y),b.y+b.h/2);flat(g,0,.1,0,w,d,mats.concrete);box(g,-13,.2,0,4,6,5,mat('#b7a07a'));box(g,13,.2,0,4,6,5,mat('#b7a07a'));box(g,0,6,0,30,1,5,mat('#eee8d9'));box(g,0,6,-1,24,2,.6,mat('#263541'));const sign=label(b.name.toUpperCase(),'#202832','#f7edcf',16);sign.scale.set(29,6,1);sign.position.set(0,8,-3);g.add(sign);box(g,0,.3,8,2,2.5,2,mat('#d1c3a8'));const arm=box(g,0,2,3,13,.35,.45,mat('#f0ead9'));arm.rotation.y=.12;g.add(arm);group.add(g)}
+ function parkAsset(group,b){const g=new THREE.Group(),w=b.w+85,d=b.h+75;g.position.set(b.x+b.w/2,terrainY(b.x,b.y),b.y+b.h/2);flat(g,0,.1,0,w,d,mat('#7fa976'));flat(g,0,.26,0,w-16,d-16,mat('#a9bf8f'));for(let x=-w*.36;x<w*.4;x+=w*.24)rect(g,x,0,4,d*.76,mat('#d3c7a6'));const water=new THREE.Mesh(new THREE.CylinderGeometry(7,7,.5,18),mat('#5caec1',.22));water.position.set(0,.6,0);g.add(water);const fountain=new THREE.Mesh(new THREE.CylinderGeometry(1.2,1.2,3,10),mat('#d3d1c6'));fountain.position.set(0,2,0);g.add(fountain);const labelMesh=label(b.name);labelMesh.position.set(0,14,-d*.48);g.add(labelMesh);group.add(g)}
+ function rockFormation(group,b){const cx=b.x+b.w/2,cz=b.y+b.h/2,random=seeded(5400),segments=12,levels=[0,27,92,177,258,315],radii=[148,142,119,91,53,15],vertices=[],indices=[],geometry=new THREE.BufferGeometry();for(let k=0;k<levels.length;k++){for(let i=0;i<segments;i++){const a=i/segments*Math.PI*2,jitter=.84+random()*.32,x=cx+Math.cos(a)*radii[k]*jitter,z=cz+Math.sin(a)*radii[k]*.76*jitter;vertices.push(x,terrainY(x,z)+levels[k],z)}}for(let k=0;k<levels.length-1;k++)for(let i=0;i<segments;i++){const a=k*segments+i,b0=k*segments+(i+1)%segments,c=(k+1)*segments+i,d=(k+1)*segments+(i+1)%segments;indices.push(a,c,b0,b0,c,d)}geometry.setAttribute('position',new THREE.Float32BufferAttribute(vertices,3));geometry.setIndex(indices);geometry.computeVertexNormals();const tones=[mat('#514f48',.98),mat('#615d54',.96),mat('#716b5f',.95),mat('#4c514c',.98),mat('#837969',.94)];for(let k=0;k<levels.length-1;k++)geometry.addGroup(k*segments*6,segments*6,k%tones.length);group.add(new THREE.Mesh(geometry,tones));
+  const boulderGeo=new THREE.DodecahedronGeometry(12,0),boulders=new THREE.InstancedMesh(boulderGeo,tones[0],18),dummy=new THREE.Object3D();for(let i=0;i<18;i++){const a=random()*Math.PI*2,r=95+random()*70,x=cx+Math.cos(a)*r,z=cz+Math.sin(a)*r*.76;dummy.position.set(x,terrainY(x,z)+7+random()*6,z);dummy.rotation.set(random()*.25,random()*6.28,random()*.25);dummy.scale.set(.8+random()*1.4,.75+random()*1.6,.7+random()*1.3);dummy.updateMatrix();boulders.setMatrixAt(i,dummy.matrix)}group.add(boulders);
+  const path=rect(group,cx,cz+139,b.w*.72,4,mat('#c2a980'));path.rotation.y=-.18;const plaque=label('ASO ROCK  ·  ABUJA','#303432','#f5eddd',20);plaque.scale.set(45,9,1);plaque.position.set(cx,terrainY(cx,cz)+91,cz-b.h*.44);group.add(plaque)}
+ function showroomModel(){
+  const site=G.world.carDealership,show=site.showroom,w=show.w,d=show.d;
+  const g=new THREE.Group(),black=mat('#171c20',.42,.34),charcoal=mat('#242b2f',.38,.34),panel=mat('#30373a',.42,.38),stone=mat('#a99e8d',.72,.1),brass=mat('#d5a84d',.35,.56),lit=mat('#f5c46d',.5,.12);
+  // Showroom glazing stays readable after dark while retaining tinted reflections in daylight.
+  const glass=new THREE.MeshStandardMaterial({color:'#c5e5e8',roughness:.12,metalness:.08,transparent:true,opacity:.48,depthWrite:false,emissive:'#ffb84f',emissiveIntensity:1.18});
+  const interiorGlow=new THREE.MeshStandardMaterial({color:'#ffe0a1',roughness:.42,emissive:'#ffab3c',emissiveIntensity:2.1});
+  customMaterials.push(glass,interiorGlow);flat(g,0,.06,0,w+18,d+18,stone);
+  // Connected wings and an elevated central sign tower give the showroom a varied, multi-level silhouette.
+  box(g,-w*.29,.38,d*.06,w*.38,18,d*.78,charcoal);
+  box(g,w*.30,.38,d*.03,w*.35,20,d*.74,charcoal);
+  box(g,-w*.08,.38,-d*.05,w*.46,27,d*.57,black);
+  box(g,-w*.40,18,d*.18,w*.16,11,d*.42,panel);
+  box(g,w*.40,20,d*.10,w*.15,14,d*.44,panel);
+  box(g,0,27.4,-d*.02,w*.34,8,d*.35,black);
+  // Full-height glazing is split into realistic bays, with warm interior volume behind it.
+  for(let level=0;level<3;level++){
+   const y=1.0+level*7.25;
+   for(const side of [-1,1]){
+    box(g,0,y,side*d*.505,w*.91,5.75,.34,glass);
+    box(g,0,y+5.95,side*d*.51,w*.94,.42,.62,black);
+    for(let x=-w*.445;x<=w*.445;x+=w*.071)box(g,x,y,side*d*.525,.55,6.05,.58,panel);
+   }
+  }
+  for(const side of [-1,1]){
+   for(const x of [-w*.475,w*.475])box(g,x,.4,side*d*.51,2.8,23,1.7,stone);
+   box(g,0,.42,side*d*.545,w*.96,2.5,5.5,black);
+   for(const x of [-w*.17,0,w*.17]){box(g,x,.46,side*d*.57,1.5,8.8,1.4,brass);box(g,x,.35,side*d*.59,15,2.4,.7,glass)}
+  }
+  for(let level=0;level<3;level++){
+   const y=1+level*7.25;
+   for(const side of [-1,1]){box(g,side*w*.5,y,0,.34,5.75,d*.52,glass);box(g,side*w*.505,y+5.95,0,.62,.42,d*.56,black);for(let z=-d*.25;z<=d*.25;z+=d*.13)box(g,side*w*.525,y,z,.58,6.05,.5,panel)}
+  }
+  // Visible reception, display dais and lighting continue behind the glass.
+  box(g,-w*.12,.5,d*.16,w*.24,1.15,5,stone);
+  // Glowing ceiling ribbons and floor washes keep showroom inventory legible through glass at night.
+  for(const z of [-d*.34,-d*.12,d*.12,d*.34]){box(g,0,19.2,z,w*.82,.22,.8,interiorGlow);box(g,0,.34,z,w*.84,.12,2.4,interiorGlow);}
+  for(let row=0;row<2;row++)for(let i=0;i<3;i++){
+   const car=carModel(g,(i-1)*w*.28,-d*.18+row*d*.26,['#111820','#e7e1d4','#a9312c','#334954','#776c55','#e3dfd5'][row*3+i],i===2?'sport':i===1?'sedan':'suv',false,true);
+   car.rotation.y=(i-1)*.09;
+   const uplight=new THREE.PointLight('#ffd08a',16,34);uplight.position.set(-w*.31+i*w*.145,7,-d*.18+row*d*.26);g.add(uplight);
+  }
+  for(const x of [-w*.32,0,w*.32]){const planter=new THREE.Mesh(new THREE.CylinderGeometry(2.3,3.1,1.8,10),mat('#5e584f'));planter.position.set(x,1.2,d*.25);g.add(planter);const plant=new THREE.Mesh(new THREE.ConeGeometry(3.4,8.5,7),mats.leaf);plant.position.set(x,5.8,d*.25);g.add(plant)}
+  box(g,0,29.9,-d*.05,w*.45,1.1,d*.4,black);box(g,0,30.7,-d*.05,w*.39,.28,d*.32,brass);
+  for(const face of [-1,1]){
+   box(g,0,24.4,face*d*.585,w*.46,11,.8,black);
+   const sign=label('ABUJACAR','#0f1519','#fff8e4',34);sign.scale.set(82,15,1);sign.position.set(0,25.2,face*(d*.61));g.add(sign);
+   const sub=label('CAR DEALERSHIP','#161b20','#f3c258',21);sub.scale.set(58,7,1);sub.position.set(0,18.2,face*(d*.61));g.add(sub);
+  }
+  const side=label('SALES  ·  BUY  ·  SELL  ·  TRADE-IN  ·  FINANCE','#171c20','#f8e6b6',16);side.scale.set(48,10,1);side.position.set(-w*.435,13.5,-d*.56);g.add(side);
+  for(const x of [-w*.36,-w*.12,w*.12,w*.36]){const down=new THREE.PointLight('#ffd78e',32,58);down.position.set(x,25,-d*.42);g.add(down)}
+  return g;
+ }
+ function dealership(group,b){
+  const root=new THREE.Group(),site=G.world.carDealership,lot=site.lot,cx=lot.x+lot.w/2,cz=lot.y+lot.h/2;
+  root.position.set(cx,terrainY(cx,cz),cz);root.rotation.y=Number(b.rotation)||0;root.scale.setScalar(Number(b.scale)||1);
+  const paving=mat('#626762'),drive=mat('#454b4f'),edge=mat('#d4c8ad'),fence=mat('#1e272b',.58,.42),stone=mat('#a79d8b'),metal=mat('#4a5559',.46,.5),yellow=mat('#e3b84c'),white=mat('#f0eee4'),warm=mat('#f7cb82');
+  flat(root,0,.08,0,lot.w+34,lot.h+38,mat('#7a806f'));flat(root,0,.22,0,lot.w,lot.h,paving);
+  // The boulevard-facing apron links the forecourt to the existing Idu service road.
+  flat(root,0,.3,-lot.h/2-18,lot.w-42,34,drive);flat(root,0,.37,-lot.h/2-35,lot.w-24,4,edge);
+  for(let x=-lot.w*.43;x<lot.w*.44;x+=48)flat(root,x,.42,-lot.h/2-18,25,1.1,white);
+  // Perimeter fence: open only at the two controlled entry lanes.
+  function fenceRun(horizontal,position,start,end){
+   for(let p=start;p<=end;p+=10){
+    const gate=horizontal&&position<0&&p>-31&&p<31;if(gate)continue;
+    const x=horizontal?p:position,z=horizontal?position:p;box(root,x,.32,z,.58,2.8,.58,fence);
+    if(Math.abs(p%40)<1)box(root,x,.32,z,3.4,5.4,3.4,stone);
+    if(p+10>end)break;
+   }
+   for(let p=start;p<end;p+=10){
+    const gate=horizontal&&position<0&&p>-31&&p<31;if(gate)continue;
+    const x=horizontal?p+5:position,z=horizontal?position:p+5;box(root,x,1.22,z,horizontal?9.8:.18,.16,horizontal?.18:9.8,metal);box(root,x,2.14,z,horizontal?9.8:.16,.16,horizontal?.16:9.8,metal);
+   }
+  }
+  fenceRun(true,-lot.h/2,-lot.w/2+5,lot.w/2-5);fenceRun(true,lot.h/2,-lot.w/2+5,lot.w/2-5);fenceRun(false,-lot.w/2,-lot.h/2+5,lot.h/2-5);fenceRun(false,lot.w/2,-lot.h/2+5,lot.h/2-5);
+  const showroom=site.showroom,model=showroomModel();model.position.set(showroom.x-cx,.4,showroom.y-cz);root.add(model);
+  // Service wing is an independent black-and-glass architectural volume.
+  const sb=site.workshop,sx=sb.x-cx,sz=sb.y-cz,serviceGlass=new THREE.MeshStandardMaterial({color:'#9acbd2',roughness:.18,metalness:.1,transparent:true,opacity:.52,emissive:'#e6a456',emissiveIntensity:.18});customMaterials.push(serviceGlass);
+  flat(root,sx,.34,sz,sb.w+12,sb.d+12,mat('#6d706b'));box(root,sx,.42,sz,sb.w,13,sb.d,mat('#20282c',.42,.36));box(root,sx,.9,sz-sb.d*.51,sb.w*.84,8,.35,serviceGlass);box(root,sx,13.6,sz,sb.w+8,.85,sb.d+8,mat('#161c20',.42,.35));
+  for(let x=sx-sb.w*.37;x<sx+sb.w*.4;x+=sb.w*.18)box(root,x,.5,sz-sb.d*.53,.55,8.8,.6,metal);
+  const service=label('ABUJACAR  ·  SERVICE & DETAILING','#182027','#f4d18a',19);service.scale.set(42,6,1);service.position.set(sx,10.5,sz-sb.d*.56);root.add(service);
+  // Security booth, IN/OUT lanes, gates and illuminated frontage pylons.
+  const gateZ=-lot.h/2+18;
+  for(const x of [-34,34]){box(root,x,.42,gateZ,3.2,5.8,3.8,stone);const beacon=new THREE.PointLight('#ffd487',12,24);beacon.position.set(x,7,gateZ);root.add(beacon)}
+  box(root,-93,.42,gateZ+12,14,4.6,12,mat('#d4cab8'));box(root,-93,1.2,gateZ+6,10,2.2,.3,serviceGlass);box(root,-93,5.2,gateZ+12,16,.5,13,mat('#252d30'));
+  for(const [x,name,dir] of [[-20,'IN  →',-.14],[20,'OUT  ←',.14]]){const marker=label(name,'#172126','#f5c44e',20);marker.scale.set(20,6,1);marker.position.set(x,4.8,gateZ-2);root.add(marker);const arm=box(root,x,2.3,gateZ+7,18,.3,.42,white);arm.rotation.y=dir}
+  const pylon=label('ABUJACAR\nSALES  ·  BUY  ·  SELL','#11171b','#fff0c5',20);pylon.scale.set(40,12,1);pylon.position.set(-lot.w*.38,9,-lot.h*.47);root.add(pylon);
+  // Marked customer forecourt and front display spaces.
+  function bay(x,z,wide=false){const bw=wide?12:9,bd=wide?19:14;for(const dx of [-bw/2,bw/2])box(root,x+dx,.43,z,.18,.05,bd,yellow);box(root,x,.43,z+bd/2,.18,.05,bw,yellow)}
+  for(const x of [-100,-60,-20,20,60,100])bay(x,30,true);
+  for(const z of [25,60])for(const x of [-142,-118,118,142])bay(x,z,true);
+  for(const x of [-142,-118,118,142])bay(x,112,false);
   // Two covered display courts flank the arrival forecourt and shelter the premium stock.
   for(const [i,x] of [[0,-130],[1,130]]){
    const z=47;flat(root,x,.4,z,58,78,mat('#5b5f5d'));for(const dx of [-26,26])for(const dz of [-34,34])box(root,x+dx,.42,z+dz,.72,6.6,.72,metal);
@@ -412,5 +557,4 @@ export async function createCity3D(G,diagnostic=()=>{}){
  diagnostic('three-world-initialization-complete',{canvasConnected:canvas.isConnected,rendererRevision:THREE.REVISION});
  return api;
 }
-
 
