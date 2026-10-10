@@ -209,6 +209,9 @@ try {
         document.getElementById('start-screen')?.classList.add('hide');
         window.Game.state.inside = null;
         window.Game.state.vehicle = null;
+        // Freeze the simulation clock so the update loop cannot overwrite controlled capture times.
+        window.__captureAdvance = window.Game.advance;
+        window.Game.advance = () => {};
         window.Game.state.hour = 12;
         window.Game.state.minute = 15;
         window.Game.world.threeWorld.render();
@@ -223,9 +226,9 @@ try {
       await page.evaluate(() => {
         const G = window.Game;
         G.state.inside = null; G.state.vehicle = null; G.ui.panel = null;
-        G.state.x = 3600; G.state.y = 3200;
+        G.state.x = 3800; G.state.y = 3200;
         G.state.hour = 12; G.state.minute = 30;
-        G.view.scale = .46; G.view.zoom = .46;
+        G.view.scale = .4; G.view.zoom = .4;
         G.world.threeWorld.render();
       });
       await page.waitForTimeout(1800);
