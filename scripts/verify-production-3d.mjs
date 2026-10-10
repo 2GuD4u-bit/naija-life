@@ -183,7 +183,43 @@ try {
         window.Game.world.threeWorld.render();
       });
       await page.screenshot({ path: `${screenshotDir}/abuja-city-night.png` });
-      console.log(JSON.stringify({ visualCheckpoints: [`${screenshotDir}/abuja-city-day.png`, `${screenshotDir}/abuja-city-night.png`] }));
+      const dealership = await page.evaluate(() => {
+        const G = window.Game, lot = G.world.carDealership.lot;
+        G.state.inside = null; G.state.vehicle = null; G.ui.panel = null;
+        G.state.x = lot.x + lot.w / 2; G.state.y = lot.y - 38;
+        G.state.hour = 12; G.state.minute = 20;
+        G.world.threeWorld.render();
+        return { player: [G.state.x, G.state.y], lot: { ...lot }, cars: G.world.carDealership.cars.length };
+      });
+      await page.waitForTimeout(1800);
+      const dealershipScene = await page.evaluate(() => {
+        const api = window.Game.world.threeWorld;
+        let dealer = null;
+        for (const chunk of api.chunks.values()) chunk.traverse(object => {
+          if (object.userData?.type === 'dealer') dealer = object;
+        });
+        if (!dealer) return { found: false };
+        let meshes = 0, lights = 0, vehicles = 0, signs = 0;
+        dealer.traverse(object => {
+          if (object.isMesh) meshes++;
+          if (object.isLight) lights++;
+          if (object.userData?.vehicleKind) vehicles++;
+          if (object.isSprite) signs++;
+        });
+        return { found: true, meshes, lights, vehicles, signs, bounds: dealer.userData.name };
+      });
+      if (!dealershipScene.found || dealershipScene.meshes < 100 || dealershipScene.vehicles < 18 || dealershipScene.signs < 4) {
+        throw new Error('ABUJACAR property did not build its detailed 3D showroom and compound: ' + JSON.stringify({ dealership, dealershipScene }));
+      }
+      await page.screenshot({ path: `${screenshotDir}/abujacar-gameplay-overview.png` });
+      await page.evaluate(() => {
+        window.Game.view.scale = Math.max(window.Game.view.scale || 1, 1.9);
+        window.Game.view.zoom = Math.max(window.Game.view.zoom || 1, 1.9);
+        window.Game.world.threeWorld.render();
+      });
+      await page.waitForTimeout(300);
+      await page.screenshot({ path: `${screenshotDir}/abujacar-gameplay-close.png` });
+      console.log(JSON.stringify({ visualCheckpoints: [`${screenshotDir}/abuja-city-day.png`, `${screenshotDir}/abuja-city-night.png`, `${screenshotDir}/abujacar-gameplay-overview.png`, `${screenshotDir}/abujacar-gameplay-close.png`], dealership, dealershipScene }));
     }
 
     console.log(JSON.stringify({ mode, target, requiredFiles: relevantResponses, result, pageErrors }, null, 2));
@@ -192,3 +228,4 @@ try {
 } finally {
   await browser.close();
 }
+
