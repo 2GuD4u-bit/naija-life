@@ -35,7 +35,7 @@ try {
     });
     page.on('response', response => {
       const pathname = new URL(response.url()).pathname;
-      if (/\/js\/(world3d\.js|three-world\.js|vendor\/(three\.module|GLTFLoader|BufferGeometryUtils)\.js)$/.test(pathname) || pathname.startsWith('/naija-life/assets/3d/polyhaven/')) {
+      if (/\/js\/(world3d\.js|three-world\.js|vendor\/(three\.module|GLTFLoader|BufferGeometryUtils)\.js)$/.test(pathname) || pathname.startsWith('/naija-life/assets/3d/')) {
         relevantResponses[pathname] = response.status();
       }
     });
@@ -266,7 +266,7 @@ try {
         return { found: true, meshes, lights, vehicles, signs, bevelledBodies, realPlants, cc0GlbVehicles, bounds: dealer.userData.name };
       });
       if (!dealershipScene.found || dealershipScene.meshes < 100 || dealershipScene.vehicles < 18 || dealershipScene.signs < 4 || dealershipScene.bevelledBodies < 18 || dealershipScene.realPlants < 1 || dealershipScene.cc0GlbVehicles < 1 || relevantResponses['/naija-life/assets/3d/vehicles/white-four-door-sedan.glb'] !== 200) {
-        throw new Error('ABUJACAR property did not build its detailed 3D showroom and compound: ' + JSON.stringify({ dealership, dealershipScene }));
+        throw new Error('ABUJACAR property did not build its detailed 3D showroom and compound: ' + JSON.stringify({ dealership, dealershipScene, vehicleAssetResponse: relevantResponses['/naija-life/assets/3d/vehicles/white-four-door-sedan.glb'] }));
       }
       await page.screenshot({ path: `${screenshotDir}/abujacar-gameplay-overview.png`, timeout: 90000 });
       await page.evaluate(() => {
