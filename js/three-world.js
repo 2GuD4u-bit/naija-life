@@ -113,7 +113,25 @@ export async function createCity3D(G,diagnostic=()=>{}){
   }
   return g;
  }
- function carModel(parent,x,z,tint,kind='sedan',large=false,local=false){const g=new THREE.Group();g.position.set(x,local?0:terrainY(x,z),z);const bus=kind==='bus'||kind==='minibus',w=bus?2.5:kind==='suv'?2.05:1.9,l=bus?7:kind==='suv'?4.8:4.4,h=bus?2.75:kind==='suv'?1.9:1.45,paint=mat(tint||'#263544',.35,.38);box(g,0,.12,0,l*.91,h*.62,w,paint);box(g,-l*.055,.12+h*.49,0,l*.46,h*.43,w*.86,mat('#8ec2ce',.23,.08));box(g,l*.37,.18,0,l*.16,.2,w*.92,mat('#faf0d3',.35,.25));for(const xx of [-l*.32,l*.32])for(const zz of [-w*.55,w*.55]){const wheel=new THREE.Mesh(wheelGeometry,mats.dark);wheel.rotation.z=Math.PI/2;wheel.position.set(xx,.35,zz);g.add(wheel)}parent.add(g);return g}
+ function carModel(parent,x,z,tint,kind='sedan',large=false,local=false){
+  const g=new THREE.Group();g.position.set(x,local?0:terrainY(x,z),z);
+  const bus=kind==='bus'||kind==='minibus',suv=kind==='suv',sport=kind==='sport',w=bus?2.65:suv?2.18:1.9,l=bus?7:suv?5.15:sport?4.7:4.45,h=bus?2.8:suv?2.05:sport?1.25:1.48,paint=mat(tint||'#263544',.31,.42),glass=mat('#7195a1',.2,.18),rubber=mat('#20262a',.92),chrome=mat('#a6aca9',.28,.72),lamp=mat('#fff0ba',.22,.1),tail=mat('#bd4138',.35,.1);
+  // Separate chassis, bonnet and rear deck give each stock car a recognisable profile.
+  box(g,0,.1,0,l*.94,.64,w*.91,paint);box(g,l*.25,.48,0,l*.43,.24,w*.84,paint);box(g,-l*.34,.44,0,l*.27,.22,w*.82,paint);
+  box(g,-l*.055,.61,0,l*(bus?.64:suv?.53:sport?.46:.5),h*.48,w*.79,paint);
+  const roofY=.61+h*.48;box(g,-l*.055,roofY-.08,0,l*(bus?.62:suv?.49:.43),.16,w*.78,sport?chrome:paint);
+  // Individually framed windshields and side windows catch the showroom lights.
+  box(g,l*.17,.78,0,.13,h*.3,w*.69,glass);box(g,-l*.28,.77,0,.12,h*.29,w*.68,glass);
+  for(const side of [-1,1]){for(const xx of [-l*.16,l*.035])box(g,xx,.78,side*w*.405,l*.16,h*.28,.08,glass);box(g,-l*.055,.66,side*w*.43,.09,h*.42,.13,mat('#252c30',.4,.35));box(g,-l*.025,.57,side*w*.5,.46,.08,.12,chrome)}
+  // Bumpers, grille, registration plate, headlamps and red rear lamps.
+  box(g,l*.48,.19,0,.18,.25,w*.94,chrome);box(g,l*.505,.35,0,.08,.26,w*.3,mat('#30373a',.52,.3));box(g,-l*.48,.19,0,.16,.24,w*.94,mat('#555c5f',.52,.4));
+  for(const side of [-1,1]){box(g,l*.47,.48,side*w*.32,.08,.2,w*.22,lamp);box(g,-l*.47,.47,side*w*.32,.08,.22,w*.2,tail)}
+  // Four detailed wheels with dark tyres, alloy hubs and subtle arches.
+  for(const xx of [-l*.32,l*.32])for(const zz of [-w*.52,w*.52]){const tyre=new THREE.Mesh(wheelGeometry,rubber);tyre.rotation.z=Math.PI/2;tyre.position.set(xx,.38,zz);g.add(tyre);const hub=new THREE.Mesh(new THREE.CylinderGeometry(.22,.22,.22,10),chrome);hub.rotation.z=Math.PI/2;hub.position.set(xx,.38,zz*1.04);g.add(hub)}
+  g.userData.vehicleKind=kind;
+  if(suv){for(const side of [-1,1])box(g,-l*.055,roofY+.13,side*w*.34,l*.55,.12,.12,chrome)}
+  parent.add(g);return g;
+ }
  function treeBatch(group,cx,cz,seed,count=42){
   const rand=seeded(seed),trunkGeo=new THREE.CylinderGeometry(.48,.78,7,7),crownGeo=new THREE.SphereGeometry(1,8,6),palmGeo=new THREE.BufferGeometry();
   palmGeo.setAttribute('position',new THREE.Float32BufferAttribute([0,0,0,.2,.3,0,.45,.32,0,.78,.15,0,1,0,0,.78,-.15,0,.45,-.32,0,.2,-.3,0],3));palmGeo.setIndex([0,1,7,1,2,7,2,6,7,2,3,6,3,5,6,3,4,5]);palmGeo.computeVertexNormals();sharedGeometry.add(trunkGeo,crownGeo);
@@ -244,7 +262,7 @@ export async function createCity3D(G,diagnostic=()=>{}){
  function showroomModel(){
   const site=G.world.carDealership,show=site.showroom,w=show.w,d=show.d;
   const g=new THREE.Group(),black=mat('#171c20',.42,.34),charcoal=mat('#242b2f',.38,.34),panel=mat('#30373a',.42,.38),stone=mat('#a99e8d',.72,.1),brass=mat('#d5a84d',.35,.56),lit=mat('#f5c46d',.5,.12);
-  const glass=new THREE.MeshStandardMaterial({color:'#a9d8df',roughness:.12,metalness:.12,transparent:true,opacity:.46,depthWrite:false,emissive:'#a96c28',emissiveIntensity:.28});
+  const glass=new THREE.MeshStandardMaterial({color:'#a9d8df',roughness:.12,metalness:.12,transparent:true,opacity:.39,depthWrite:false,emissive:'#a96c28',emissiveIntensity:.48});
   customMaterials.push(glass);flat(g,0,.06,0,w+18,d+18,stone);
   // Connected wings and an elevated central sign tower give the showroom a varied, multi-level silhouette.
   box(g,-w*.29,.38,d*.06,w*.38,18,d*.78,charcoal);
@@ -256,13 +274,21 @@ export async function createCity3D(G,diagnostic=()=>{}){
   // Full-height glazing is split into realistic bays, with warm interior volume behind it.
   for(let level=0;level<3;level++){
    const y=1.0+level*7.25;
-   box(g,0,y,-d*.505,w*.91,5.75,.34,glass);
-   box(g,0,y+5.95,-d*.51,w*.94,.42,.62,black);
-   for(let x=-w*.445;x<=w*.445;x+=w*.071)box(g,x,y,-d*.525,.55,6.05,.58,panel);
+   for(const side of [-1,1]){
+    box(g,0,y,side*d*.505,w*.91,5.75,.34,glass);
+    box(g,0,y+5.95,side*d*.51,w*.94,.42,.62,black);
+    for(let x=-w*.445;x<=w*.445;x+=w*.071)box(g,x,y,side*d*.525,.55,6.05,.58,panel);
+   }
   }
-  for(const x of [-w*.475,w*.475])box(g,x,.4,-d*.51,2.8,23,1.7,stone);
-  box(g,0,.42,-d*.545,w*.96,2.5,5.5,black);
-  for(const x of [-w*.17,0,w*.17]){box(g,x,.46,-d*.57,1.5,8.8,1.4,brass);box(g,x,.35,-d*.59,15,2.4,.7,glass)}
+  for(const side of [-1,1]){
+   for(const x of [-w*.475,w*.475])box(g,x,.4,side*d*.51,2.8,23,1.7,stone);
+   box(g,0,.42,side*d*.545,w*.96,2.5,5.5,black);
+   for(const x of [-w*.17,0,w*.17]){box(g,x,.46,side*d*.57,1.5,8.8,1.4,brass);box(g,x,.35,side*d*.59,15,2.4,.7,glass)}
+  }
+  for(let level=0;level<3;level++){
+   const y=1+level*7.25;
+   for(const side of [-1,1]){box(g,side*w*.5,y,0,.34,5.75,d*.52,glass);box(g,side*w*.505,y+5.95,0,.62,.42,d*.56,black);for(let z=-d*.25;z<=d*.25;z+=d*.13)box(g,side*w*.525,y,z,.58,6.05,.5,panel)}
+  }
   // Visible reception, display dais and lighting continue behind the glass.
   box(g,-w*.12,.5,d*.16,w*.24,1.15,5,stone);
   for(let row=0;row<2;row++)for(let i=0;i<3;i++){
@@ -272,9 +298,12 @@ export async function createCity3D(G,diagnostic=()=>{}){
   }
   for(const x of [-w*.32,0,w*.32]){const planter=new THREE.Mesh(new THREE.CylinderGeometry(2.3,3.1,1.8,10),mat('#5e584f'));planter.position.set(x,1.2,d*.25);g.add(planter);const plant=new THREE.Mesh(new THREE.ConeGeometry(3.4,8.5,7),mats.leaf);plant.position.set(x,5.8,d*.25);g.add(plant)}
   box(g,0,29.9,-d*.05,w*.45,1.1,d*.4,black);box(g,0,30.7,-d*.05,w*.39,.28,d*.32,brass);
-  const sign=label('ABUJACAR','#0f1519','#fff8e4',34);sign.scale.set(154,19,1);sign.position.set(0,24.5,-d*.57);g.add(sign);
-  const sub=label('CAR DEALERSHIP','#161b20','#f3c258',21);sub.scale.set(104,9,1);sub.position.set(0,20.0,-d*.575);g.add(sub);
-  const side=label('SALES  ·  BUY  ·  SELL  ·  TRADE-IN  ·  FINANCE','#171c20','#f8e6b6',16);side.scale.set(78,11,1);side.position.set(-w*.435,13.5,-d*.56);g.add(side);
+  for(const face of [-1,1]){
+   box(g,0,24.4,face*d*.585,w*.46,11,.8,black);
+   const sign=label('ABUJACAR','#0f1519','#fff8e4',34);sign.scale.set(82,15,1);sign.position.set(0,25.2,face*(d*.61));g.add(sign);
+   const sub=label('CAR DEALERSHIP','#161b20','#f3c258',21);sub.scale.set(58,7,1);sub.position.set(0,18.2,face*(d*.61));g.add(sub);
+  }
+  const side=label('SALES  ·  BUY  ·  SELL  ·  TRADE-IN  ·  FINANCE','#171c20','#f8e6b6',16);side.scale.set(48,10,1);side.position.set(-w*.435,13.5,-d*.56);g.add(side);
   for(const x of [-w*.36,-w*.12,w*.12,w*.36]){const down=new THREE.PointLight('#ffd78e',11,30);down.position.set(x,25,-d*.42);g.add(down)}
   return g;
  }
@@ -289,13 +318,13 @@ export async function createCity3D(G,diagnostic=()=>{}){
   // Perimeter fence: open only at the two controlled entry lanes.
   function fenceRun(horizontal,position,start,end){
    for(let p=start;p<=end;p+=10){
-    const gate=horizontal&&position<0&&p>-92&&p<92;if(gate)continue;
+    const gate=horizontal&&position<0&&p>-31&&p<31;if(gate)continue;
     const x=horizontal?p:position,z=horizontal?position:p;box(root,x,.32,z,.58,2.8,.58,fence);
     if(Math.abs(p%40)<1)box(root,x,.32,z,3.4,5.4,3.4,stone);
     if(p+10>end)break;
    }
    for(let p=start;p<end;p+=10){
-    const gate=horizontal&&position<0&&p>-92&&p<92;if(gate)continue;
+    const gate=horizontal&&position<0&&p>-31&&p<31;if(gate)continue;
     const x=horizontal?p+5:position,z=horizontal?position:p+5;box(root,x,1.22,z,horizontal?9.8:.18,.16,horizontal?.18:9.8,metal);box(root,x,2.14,z,horizontal?9.8:.16,.16,horizontal?.16:9.8,metal);
    }
   }
@@ -303,37 +332,37 @@ export async function createCity3D(G,diagnostic=()=>{}){
   const showroom=site.showroom,model=showroomModel();model.position.set(showroom.x-cx,.4,showroom.y-cz);root.add(model);
   // Service wing is an independent black-and-glass architectural volume.
   const sb=site.workshop,sx=sb.x-cx,sz=sb.y-cz,serviceGlass=new THREE.MeshStandardMaterial({color:'#9acbd2',roughness:.18,metalness:.1,transparent:true,opacity:.52,emissive:'#e6a456',emissiveIntensity:.18});customMaterials.push(serviceGlass);
-  flat(root,sx,.34,sz,sb.w+22,sb.d+22,mat('#6d706b'));box(root,sx,.42,sz,sb.w,13,sb.d,mat('#20282c',.42,.36));box(root,sx,.9,sz-sb.d*.51,sb.w*.84,8,.35,serviceGlass);box(root,sx,13.6,sz,sb.w+8,.85,sb.d+8,mat('#161c20',.42,.35));
+  flat(root,sx,.34,sz,sb.w+12,sb.d+12,mat('#6d706b'));box(root,sx,.42,sz,sb.w,13,sb.d,mat('#20282c',.42,.36));box(root,sx,.9,sz-sb.d*.51,sb.w*.84,8,.35,serviceGlass);box(root,sx,13.6,sz,sb.w+8,.85,sb.d+8,mat('#161c20',.42,.35));
   for(let x=sx-sb.w*.37;x<sx+sb.w*.4;x+=sb.w*.18)box(root,x,.5,sz-sb.d*.53,.55,8.8,.6,metal);
-  const service=label('ABUJACAR  ·  SERVICE & DETAILING','#182027','#f4d18a',19);service.scale.set(68,8,1);service.position.set(sx,10.5,sz-sb.d*.56);root.add(service);
+  const service=label('ABUJACAR  ·  SERVICE & DETAILING','#182027','#f4d18a',19);service.scale.set(42,6,1);service.position.set(sx,10.5,sz-sb.d*.56);root.add(service);
   // Security booth, IN/OUT lanes, gates and illuminated frontage pylons.
   const gateZ=-lot.h/2+18;
-  for(const x of [-62,62]){box(root,x,.42,gateZ,4.4,6.8,5.2,stone);const beacon=new THREE.PointLight('#ffd487',10,26);beacon.position.set(x,8,gateZ);root.add(beacon)}
-  box(root,-100,.42,gateZ+14,18,5.2,14,mat('#d4cab8'));box(root,-100,1.2,gateZ+6.75,13,2.6,.3,serviceGlass);box(root,-100,5.9,gateZ+14,20,.55,15,mat('#252d30'));
-  for(const [x,name,dir] of [[-40,'IN  →',-.14],[40,'OUT  ←',.14]]){const marker=label(name,'#172126','#f5c44e',20);marker.scale.set(26,7,1);marker.position.set(x,5.4,gateZ-2);root.add(marker);const arm=box(root,x,2.6,gateZ+9,27,.3,.42,white);arm.rotation.y=dir}
-  const pylon=label('ABUJACAR\nSALES  ·  BUY  ·  SELL','#11171b','#fff0c5',20);pylon.scale.set(54,15,1);pylon.position.set(-lot.w*.38,11,-lot.h*.47);root.add(pylon);
+  for(const x of [-34,34]){box(root,x,.42,gateZ,3.2,5.8,3.8,stone);const beacon=new THREE.PointLight('#ffd487',12,24);beacon.position.set(x,7,gateZ);root.add(beacon)}
+  box(root,-93,.42,gateZ+12,14,4.6,12,mat('#d4cab8'));box(root,-93,1.2,gateZ+6,10,2.2,.3,serviceGlass);box(root,-93,5.2,gateZ+12,16,.5,13,mat('#252d30'));
+  for(const [x,name,dir] of [[-20,'IN  →',-.14],[20,'OUT  ←',.14]]){const marker=label(name,'#172126','#f5c44e',20);marker.scale.set(20,6,1);marker.position.set(x,4.8,gateZ-2);root.add(marker);const arm=box(root,x,2.3,gateZ+7,18,.3,.42,white);arm.rotation.y=dir}
+  const pylon=label('ABUJACAR\nSALES  ·  BUY  ·  SELL','#11171b','#fff0c5',20);pylon.scale.set(40,12,1);pylon.position.set(-lot.w*.38,9,-lot.h*.47);root.add(pylon);
   // Marked customer forecourt and front display spaces.
   function bay(x,z,wide=false){const bw=wide?12:9,bd=wide?19:14;for(const dx of [-bw/2,bw/2])box(root,x+dx,.43,z,.18,.05,bd,yellow);box(root,x,.43,z+bd/2,.18,.05,bw,yellow)}
-  for(let i=0;i<7;i++)bay(-295+i*53,-30,true);
-  for(let i=0;i<3;i++)bay(-290+i*60,140,true);
-  for(let i=0;i<4;i++)for(let row=0;row<2;row++)bay(90+i*60,40+row*90,true);
-  // Three covered display courts hold the premium vehicles at the rear-right side.
-  for(const [i,x] of [92,182,272].entries()){
-   const z=90;flat(root,x,.4,z,76,142,mat('#5b5f5d'));for(const dx of [-35,35])for(const dz of [-62,62])box(root,x+dx,.42,z+dz,.8,8.2,.8,metal);
-   box(root,x,8.3,z,82,.7,148,mat('#596266',.42,.38));box(root,x,7.7,z,78,.16,144,mat('#a7afb0',.26,.22));
-   const canopy=label(i===0?'PREMIUM SUV DISPLAY':i===1?'EXECUTIVE COLLECTION':'CERTIFIED PRE-OWNED','#1b2429','#f3cd75',15);canopy.scale.set(50,6,1);canopy.position.set(x,8.9,z-65);root.add(canopy);
-   const down=new THREE.PointLight('#ffd18b',13,30);down.position.set(x,7,z);root.add(down);
+  for(const x of [-135,-92,-49,-6,37,80])bay(x,8,true);
+  for(const z of [25,60])for(const x of [-142,-118,118,142])bay(x,z,true);
+  for(const x of [-142,-118,118,142])bay(x,112,false);
+  // Two covered display courts flank the arrival forecourt and shelter the premium stock.
+  for(const [i,x] of [[0,-130],[1,130]]){
+   const z=47;flat(root,x,.4,z,58,78,mat('#5b5f5d'));for(const dx of [-26,26])for(const dz of [-34,34])box(root,x+dx,.42,z+dz,.72,6.6,.72,metal);
+   box(root,x,6.8,z,62,.7,84,mat('#596266',.42,.38));box(root,x,7.25,z,58,.16,80,mat('#a7afb0',.26,.22));
+   const canopy=label(i===0?'PREMIUM SUV DISPLAY':'EXECUTIVE COLLECTION','#1b2429','#f3cd75',15);canopy.scale.set(38,5,1);canopy.position.set(x,7.6,z-37);root.add(canopy);
+   const down=new THREE.PointLight('#ffd18b',18,24);down.position.set(x,6,z);root.add(down);
   }
   // All inventory uses the shared reusable 3D vehicle geometry.
-  (site.cars||[]).forEach((car,i)=>{const px=car.x-cx,pz=car.y-cz,vehicle=carModel(root,px,pz,car.color,car.kind,false,true);if(!car.interior){vehicle.rotation.y=(i%5===0?Math.PI/2:i%3===0?-.08:.08);bay(px,pz,car.kind==='suv')}});
+  (site.cars||[]).forEach((car,i)=>{if(car.interior)return;const px=car.x-cx,pz=car.y-cz,vehicle=carModel(root,px,pz,car.color,car.kind,false,true);vehicle.rotation.y=(i%5===0?Math.PI/2:i%3===0?-.08:.08);bay(px,pz,car.kind==='suv')});
   // Planned planting beds, palms, lamps, and low landscape illumination.
   function palm(x,z,scale=1){box(root,x,.35,z,.8,7*scale,.8,mats.trunk);for(let arm=0;arm<6;arm++){const leaf=new THREE.Mesh(new THREE.ConeGeometry(1.25*scale,7*scale,5),mats.leaf2);leaf.position.set(x+Math.cos(arm*Math.PI/3)*3.2*scale,7.8*scale,z+Math.sin(arm*Math.PI/3)*3.2*scale);leaf.rotation.z=.75;leaf.rotation.x=.55;root.add(leaf)}}
   function lamp(x,z){box(root,x,.35,z,.65,8,.65,mat('#263136'));box(root,x,8.3,z,2.5,.45,2.5,mat('#d9d2bd'));const light=new THREE.PointLight('#ffd38a',12,38);light.position.set(x,9,z);root.add(light)}
-  for(const [x,z] of [[-320,-198],[-230,-198],[-140,-198],[210,-198],[318,-198],[-330,200],[-230,215],[-130,216],[320,205]])palm(x,z,.95);
-  for(const [x,z] of [[-318,-160],[-190,-160],[-20,-160],[330,-160],[-320,185],[-85,190],[320,185]])lamp(x,z);
-  for(const [x,z] of [[-295,85],[-245,85],[65,-5],[155,-5],[245,-5]]){const planter=new THREE.Mesh(new THREE.CylinderGeometry(3.2,4.2,1.4,10),mat('#6a665b'));planter.position.set(x,1.05,z);root.add(planter);const shrub=new THREE.Mesh(new THREE.SphereGeometry(4.5,8,6),mats.leaf);shrub.position.set(x,4.5,z);root.add(shrub)}
-  const welcome=label('ABUJACAR  ·  LUXURY VEHICLES','#111a20','#fff7df',24);welcome.scale.set(90,12,1);welcome.position.set(0,8,-lot.h*.51);root.add(welcome);
-  root.userData.type='dealer';group.add(root);return root;
+  for(const [x,z] of [[-150,-112],[-90,-112],[90,-112],[150,-112],[-153,123],[-92,123],[92,123],[153,123]])palm(x,z,.9);
+  for(const [x,z] of [[-162,-84],[-62,-84],[62,-84],[162,-84],[-162,120],[-62,120],[62,120],[162,120]])lamp(x,z);
+  for(const [x,z] of [[-154,4],[-154,54],[-78,84],[78,84],[154,54],[154,4]]){const planter=new THREE.Mesh(new THREE.CylinderGeometry(2.2,2.8,.9,10),mat('#6a665b'));planter.position.set(x,.85,z);root.add(planter);const shrub=new THREE.Mesh(new THREE.SphereGeometry(2.7,8,6),mats.leaf);shrub.position.set(x,3,z);root.add(shrub)}
+  const welcome=label('ABUJACAR  ·  LUXURY VEHICLES','#111a20','#fff7df',24);welcome.scale.set(62,10,1);welcome.position.set(0,7,-lot.h*.51);root.add(welcome);
+  root.userData.type='dealer';root.userData.name='ABUJACAR luxury dealership';group.add(root);return root;
  } function carStand(group,b){const w=Math.max(168,b.w+52),d=Math.max(132,b.h+40),root=new THREE.Group(),ground=terrainY(b.x+b.w/2,b.y+b.h/2);root.position.set(b.x+b.w/2,ground,b.y+b.h/2);flat(root,0,.05,0,w,d,mat('#3e484b'));flat(root,0,.22,0,w-8,d-8,mat('#70716b'));flat(root,0,.38,d*.25,w-16,d*.35,mat('#50585a'));
   const facade=mat('#343b3e',.42,.35),glass=new THREE.MeshStandardMaterial({color:'#a9d4d8',roughness:.2,metalness:.08,transparent:true,opacity:.54}),sign=label(b.name.toUpperCase(),'#171b1e','#f7df9b',24);customMaterials.push(glass);box(root,0,.55,-d*.29,w*.72,13,d*.22,facade);box(root,0,1.4,-d*.405,w*.65,8,.3,glass);for(let x=-w*.34;x<=w*.34;x+=w*.17)box(root,x,1.5,-d*.41,.45,8,.45,mat('#242a2d',.45,.25));box(root,0,13.7,-d*.29,w*.75,.8,d*.24,mat('#202528',.45,.3));sign.scale.set(w*.52,12,1);sign.position.set(0,10.5,-d*.42);root.add(sign);
   for(const [i,x] of [-w*.3,-w*.1,w*.1,w*.3].entries()){const z=d*.03;for(const dx of [-13,13])box(root,x+dx,.38,z,.22,.08,27,mat('#d6b04d'));for(const dz of [-11,11])box(root,x,.38,z+dz,25,.08,.22,mat('#d6b04d'));box(root,x,7.2,z,28,.5,25,mat(i%2?'#535b5e':'#747877',.42,.28));for(const dx of [-13,13])for(const dz of [-11,11])box(root,x+dx,.4,z+dz,.28,6.8,.28,mat('#4c5558',.45,.4));box(root,x,6.9,z,28,.42,25,mat('#647174',.34,.34));}
