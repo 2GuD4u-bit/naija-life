@@ -262,8 +262,7 @@ export async function createCity3D(G,diagnostic=()=>{}){
  function showroomModel(){
   const site=G.world.carDealership,show=site.showroom,w=show.w,d=show.d;
   const g=new THREE.Group(),black=mat('#171c20',.42,.34),charcoal=mat('#242b2f',.38,.34),panel=mat('#30373a',.42,.38),stone=mat('#a99e8d',.72,.1),brass=mat('#d5a84d',.35,.56),lit=mat('#f5c46d',.5,.12);
-  // Showroom glazing remains readable after dark: the interior has warm display lighting,
-  // while the tinted curtain wall still reflects the charcoal frame in daylight.
+  // Showroom glazing stays readable after dark while retaining tinted reflections in daylight.
   const glass=new THREE.MeshStandardMaterial({color:'#c5e5e8',roughness:.12,metalness:.08,transparent:true,opacity:.48,depthWrite:false,emissive:'#ffb84f',emissiveIntensity:1.18});
   const interiorGlow=new THREE.MeshStandardMaterial({color:'#ffe0a1',roughness:.42,emissive:'#ffab3c',emissiveIntensity:2.1});
   customMaterials.push(glass,interiorGlow);flat(g,0,.06,0,w+18,d+18,stone);
@@ -294,12 +293,8 @@ export async function createCity3D(G,diagnostic=()=>{}){
   }
   // Visible reception, display dais and lighting continue behind the glass.
   box(g,-w*.12,.5,d*.16,w*.24,1.15,5,stone);
-  // Glowing ceiling ribbons and a warm floor wash make the showroom inventory legible
-  // through the glass at night instead of reading as a dark, empty box.
-  for(const z of [-d*.34,-d*.12,d*.12,d*.34]){
-   box(g,0,19.2,z,w*.82,.22,.8,interiorGlow);
-   box(g,0,.34,z,w*.84,.12,2.4,interiorGlow);
-  }
+  // Glowing ceiling ribbons and floor washes keep showroom inventory legible through glass at night.
+  for(const z of [-d*.34,-d*.12,d*.12,d*.34]){box(g,0,19.2,z,w*.82,.22,.8,interiorGlow);box(g,0,.34,z,w*.84,.12,2.4,interiorGlow);}
   for(let row=0;row<2;row++)for(let i=0;i<3;i++){
    const car=carModel(g,-w*.31+i*w*.145,-d*.18+row*d*.26,['#111820','#e7e1d4','#a9312c','#334954','#776c55','#e3dfd5'][row*3+i],i===2?'sport':i===1?'sedan':'suv',false,true);
    car.rotation.y=(i-1)*.09;
