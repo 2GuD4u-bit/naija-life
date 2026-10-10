@@ -150,7 +150,9 @@ export async function createCity3D(G,diagnostic=()=>{}){
  }
  function terrainStrip(parent,axis,pos,start,end,width,material,lift=.05){const steps=Math.max(1,Math.ceil((end-start)/72)),vertices=[],uvs=[],indices=[];for(let i=0;i<=steps;i++){const t=i/steps,v=start+(end-start)*t;for(const side of [-1,1]){const half=width/2*side,x=axis==='x'?pos+half:v,z=axis==='x'?v:pos+half;vertices.push(x,terrainY(x,z)+lift,z);uvs.push(x/8,z/8)}}for(let i=0;i<steps;i++){const a=i*2,b=a+1,c=a+2,d=a+3;if(axis==='x')indices.push(a,c,b,b,c,d);else indices.push(a,b,c,b,d,c)}const geo=new THREE.BufferGeometry();geo.setAttribute('position',new THREE.Float32BufferAttribute(vertices,3));geo.setAttribute('uv',new THREE.Float32BufferAttribute(uvs,2));geo.setIndex(indices);geo.computeVertexNormals();const mesh=new THREE.Mesh(geo,material);mesh.receiveShadow=true;parent.add(mesh);return mesh}
  function pathSurface(parent,a,b,width,material,lift=.12){const dx=b[0]-a[0],dz=b[1]-a[1],len=Math.hypot(dx,dz),steps=Math.max(1,Math.ceil(len/64)),nx=dz/len,nz=-dx/len,vertices=[],uvs=[],indices=[];for(let i=0;i<=steps;i++){const t=i/steps,x=a[0]+dx*t,z=a[1]+dz*t;for(const side of [-1,1]){const px=x+nx*width*.5*side,pz=z+nz*width*.5*side;vertices.push(px,terrainY(px,pz)+lift,pz);uvs.push(px/8,pz/8)}}for(let i=0;i<steps;i++){const k=i*2;indices.push(k,k+2,k+1,k+1,k+2,k+3)}const geo=new THREE.BufferGeometry();geo.setAttribute('position',new THREE.Float32BufferAttribute(vertices,3));geo.setAttribute('uv',new THREE.Float32BufferAttribute(uvs,2));geo.setIndex(indices);geo.computeVertexNormals();const mesh=new THREE.Mesh(geo,material);mesh.receiveShadow=true;parent.add(mesh);return mesh}
- function roadWidth(axis,ids.findIndex((p,i)=>Math.abs(along-p)<roadWidth(axis==='x'?'y':'x',i)/2+30);if(cross>=0)continue;segments.push({axis,pos,along})}};
+ function roadWidth(axis,index){return axis==='x'?(index%5===0?30:index%2===0?20:13):(index%4===0?30:index%2===0?20:13)}
+ function addRoadMedians(g,cx,cz){
+  const segments=[],add=(axis,pos,start,end,otherRoads)=>{for(let along=start+54;along<end-30;along+=104){const cross=otherRoads.findIndex((p,i)=>Math.abs(along-p)<roadWidth(axis==='x'?'y':'x',i)/2+30);if(cross>=0)continue;segments.push({axis,pos,along})}};
   for(let i=0;i<G.world.roadX.length;i++){const x=G.world.roadX[i];if(roadWidth('x',i)>=28&&x>=cx-15&&x<=cx+chunkSize+15)add('x',x,cz,cz+chunkSize,G.world.roadY)}
   for(let i=0;i<G.world.roadY.length;i++){const y=G.world.roadY[i];if(roadWidth('y',i)>=28&&y>=cz-15&&y<=cz+chunkSize+15)add('y',y,cx,cx+chunkSize,G.world.roadX)}
   if(!segments.length)return;const grass=new THREE.InstancedMesh(boxGeometry(60,.18,2.25),mats.park,segments.length),curbs=new THREE.InstancedMesh(boxGeometry(60,.32,.3),mats.roadEdge,segments.length*2),dummy=new THREE.Object3D();let curbIndex=0;
@@ -271,8 +273,7 @@ export async function createCity3D(G,diagnostic=()=>{}){
  function showroomModel(){
   const site=G.world.carDealership,show=site.showroom,w=show.w,d=show.d;
   const g=new THREE.Group(),black=mat('#171c20',.42,.34),charcoal=mat('#242b2f',.38,.34),panel=mat('#30373a',.42,.38),stone=mat('#a99e8d',.72,.1),brass=mat('#d5a84d',.35,.56),lit=mat('#f5c46d',.5,.12);
-  // Showroom glazing remains readable after dark: the interior has warm display lighting,
-  // while the tinted curtain wall still reflects the charcoal frame in daylight.
+  // Showroom glazing stays readable after dark while retaining tinted reflections in daylight.
   const glass=new THREE.MeshStandardMaterial({color:'#c5e5e8',roughness:.12,metalness:.08,transparent:true,opacity:.48,depthWrite:false,emissive:'#ffb84f',emissiveIntensity:1.18});
   const interiorGlow=new THREE.MeshStandardMaterial({color:'#ffe0a1',roughness:.42,emissive:'#ffab3c',emissiveIntensity:2.1});
   customMaterials.push(glass,interiorGlow);flat(g,0,.06,0,w+18,d+18,stone);
@@ -303,12 +304,8 @@ export async function createCity3D(G,diagnostic=()=>{}){
   }
   // Visible reception, display dais and lighting continue behind the glass.
   box(g,-w*.12,.5,d*.16,w*.24,1.15,5,stone);
-  // Glowing ceiling ribbons and a warm floor wash make the showroom inventory legible
-  // through the glass at night instead of reading as a dark, empty box.
-  for(const z of [-d*.34,-d*.12,d*.12,d*.34]){
-   box(g,0,19.2,z,w*.82,.22,.8,interiorGlow);
-   box(g,0,.34,z,w*.84,.12,2.4,interiorGlow);
-  }
+  // Glowing ceiling ribbons and floor washes keep showroom inventory legible through glass at night.
+  for(const z of [-d*.34,-d*.12,d*.12,d*.34]){box(g,0,19.2,z,w*.82,.22,.8,interiorGlow);box(g,0,.34,z,w*.84,.12,2.4,interiorGlow);}
   for(let row=0;row<2;row++)for(let i=0;i<3;i++){
    const car=carModel(g,-w*.31+i*w*.145,-d*.18+row*d*.26,['#111820','#e7e1d4','#a9312c','#334954','#776c55','#e3dfd5'][row*3+i],i===2?'sport':i===1?'sedan':'suv',false,true);
    car.rotation.y=(i-1)*.09;
