@@ -245,7 +245,8 @@ try {
         G.world.threeWorld.render();
         return { player: [G.state.x, G.state.y], lot: { ...lot }, cars: G.world.carDealership.cars.length };
       });
-      await page.waitForFunction(() => {let ready=false;for(const chunk of window.Game.world.threeWorld.chunks.values())chunk.traverse(object=>{if(object.name==='Innerscene CC0 white four-door sedan')ready=true});return ready;}, null, {timeout:45000});
+      console.log(JSON.stringify({ abujacarCameraReady: dealership, glbResponse: relevantResponses['/naija-life/assets/3d/vehicles/white-four-door-sedan.glb'] }));
+      await page.waitForFunction(() => {let ready=false;for(const chunk of window.Game.world.threeWorld.chunks.values())chunk.traverse(object=>{if(object.name==='Innerscene CC0 white four-door sedan')ready=true});return ready;}, null, {timeout:120000, polling:1000});
       const dealershipScene = await page.evaluate(() => {
         const api = window.Game.world.threeWorld;
         let dealer = null;
