@@ -19,6 +19,7 @@ try {
     const page = await browser.newPage({ viewport: { width: 1440, height: 960 } });
     const pageErrors = [];
     const relevantResponses = {};
+    const verifiedAssetLogs = [];
     if (mode === 'webgl1-only') {
       await page.addInitScript(() => {
         const original = HTMLCanvasElement.prototype.getContext;
@@ -29,9 +30,12 @@ try {
       });
     }
     page.on('pageerror', error => pageErrors.push(error.message));
+    page.on('console', message => {
+      if (message.text().includes('[Naija 3D] production-cc0-assets-ready')) verifiedAssetLogs.push(message.text());
+    });
     page.on('response', response => {
       const pathname = new URL(response.url()).pathname;
-      if (/\/js\/(world3d\.js|three-world\.js|vendor\/three\.module\.js)$/.test(pathname)) {
+      if (/\/js\/(world3d\.js|three-world\.js|vendor\/(three\.module|GLTFLoader|BufferGeometryUtils)\.js)$/.test(pathname) || pathname.startsWith('/naija-life/assets/3d/polyhaven/')) {
         relevantResponses[pathname] = response.status();
       }
     });
@@ -130,7 +134,7 @@ try {
       let mappedCityMaterials = 0;
       for (const chunk of api?.chunks?.values?.() || []) chunk.traverse(object => {
         const materials = Array.isArray(object.material) ? object.material : [object.material];
-        if (object.isInstancedMesh && materials.some(material => material?.map && material?.roughnessMap && material?.bumpMap)) mappedCityMaterials++;
+        if (object.isInstancedMesh && materials.some(material => material?.map && material?.roughnessMap && (material?.normalMap || material?.bumpMap))) mappedCityMaterials++;
       });
       return {
         status: window.__NAIJA_3D_STATUS.status,
@@ -146,6 +150,8 @@ try {
         residentialLots: world.houseLots?.length || 0,
         roadSegments: api?.stats?.roads || 0,
         mappedCityMaterials,
+        cc0AssetLoaded: verifiedAssetLogs.length > 0,
+        realPlantInstances: [...(api?.chunks?.values?.() || [])].reduce((n, chunk) => { let count=0; chunk.traverse(object => { if (object.isInstancedMesh && object.name === 'Poly Haven CC0 sorrel planting') count+=object.count; }); return n+count; }, 0),
         destinations: {
           abujacar: names.has('ABUJACAR CAR DEALERSHIP'),
           devoltMould: names.has('Devolt Mould Flagship'),
@@ -164,12 +170,27 @@ try {
     if (Object.values(relevantResponses).some(status => status >= 400)) {
       throw new Error(mode + ': a required 3D file returned an HTTP error: ' + JSON.stringify(relevantResponses));
     }
+    const requiredAssetPaths = [
+      '/naija-life/js/vendor/GLTFLoader.js', '/naija-life/js/vendor/BufferGeometryUtils.js',
+      '/naija-life/assets/3d/polyhaven/concrete_tile_facade/diff.jpg',
+      '/naija-life/assets/3d/polyhaven/concrete_tile_facade/nor_gl.jpg',
+      '/naija-life/assets/3d/polyhaven/concrete_tile_facade/arm.jpg',
+      '/naija-life/assets/3d/polyhaven/shrub_sorrel_01/shrub_sorrel_01_1k.gltf',
+      '/naija-life/assets/3d/polyhaven/shrub_sorrel_01/shrub_sorrel_01.bin',
+      '/naija-life/assets/3d/polyhaven/shrub_sorrel_01/textures/shrub_sorrel_01_diff_1k.jpg',
+      '/naija-life/assets/3d/polyhaven/shrub_sorrel_01/textures/shrub_sorrel_01_nor_gl_1k.jpg',
+      '/naija-life/assets/3d/polyhaven/shrub_sorrel_01/textures/shrub_sorrel_01_arm_1k.jpg'
+    ];
+    const missingAssets = requiredAssetPaths.filter(path => relevantResponses[path] !== 200);
+    if (!verifiedAssetLogs.length || missingAssets.length) {
+      throw new Error(mode + ': production CC0 assets failed to load: ' + JSON.stringify({ missingAssets, logs: verifiedAssetLogs, responses: relevantResponses }));
+    }
     if (result.status !== 'rendering' || !result.canvasConnected || !result.visible ||
         !result.stats || result.stats.drawCalls < 1 || result.stats.triangles < 1) {
       throw new Error(mode + ': the live page did not produce a visible 3D frame: ' + JSON.stringify(result));
     }
     if (result.dimensions[0] !== 14400 || result.dimensions[1] !== 9600 || result.districts < 20 ||
-        result.cityLots !== 3568 || result.residentialLots !== 320 || result.roadSegments !== 576 || result.mappedCityMaterials < 1 ||
+        result.cityLots !== 3568 || result.residentialLots !== 320 || result.roadSegments !== 576 || result.mappedCityMaterials < 1 || result.realPlantInstances < 1 ||
         (result.stats.cityLots || 0) < 500 || (result.stats.roundabouts || 0) < 10 || (result.stats.trees || 0) < 15 ||
         !result.destinations.abujacar || !result.destinations.devoltMould || !result.destinations.airport ||
         result.destinations.restaurants !== 7 || result.destinations.carStands !== 3 ||
@@ -182,6 +203,12 @@ try {
 
     if (screenshotDir && mode === 'webgl2-preferred') {
       await page.evaluate(() => {
+        // Close the UI panel through the game's own API. Clearing only ui.panel
+        // leaves #shade visible and invalidates the world screenshots.
+        window.Game.closePanel?.();
+        document.getElementById('start-screen')?.classList.add('hide');
+        window.Game.state.inside = null;
+        window.Game.state.vehicle = null;
         window.Game.state.hour = 12;
         window.Game.state.minute = 15;
         window.Game.world.threeWorld.render();
@@ -250,4 +277,5 @@ try {
 } finally {
   await browser.close();
 }
+
 

@@ -27,15 +27,24 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: 24
+      - name: Fetch checksum-verified CC0 3D assets
+        run: node scripts/fetch-3d-assets.mjs
       - name: Check JavaScript syntax and 3D files
         run: |
           for file in js/*.js; do node --check "$file"; done
           node --input-type=module --check < js/three-world.js
           node --input-type=module --check < js/vendor/three.module.js
+          node --input-type=module --check < js/vendor/GLTFLoader.js
+          node --input-type=module --check < js/vendor/BufferGeometryUtils.js
+          node --check scripts/fetch-3d-assets.mjs
           node --check scripts/verify-production-3d.mjs
           test -s js/world3d.js
           test -s js/three-world.js
           test -s js/vendor/three.module.js
+          test -s js/vendor/GLTFLoader.js
+          test -s js/vendor/BufferGeometryUtils.js
+          test -s assets/3d/polyhaven/concrete_tile_facade/diff.jpg
+          test -s assets/3d/polyhaven/shrub_sorrel_01/shrub_sorrel_01_1k.gltf
           if grep -q 'cdn.jsdelivr.net/npm/three@' js/three-world.js; then
             echo "The 3D renderer still imports Three.js from an external CDN."
             exit 1
@@ -67,4 +76,5 @@ jobs:
           path: ${{ runner.temp }}/naija-life-3d-screenshots/*.png
           if-no-files-found: warn
           retention-days: 14
+
 
