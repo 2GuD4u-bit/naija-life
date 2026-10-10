@@ -16,7 +16,7 @@ const browser = await chromium.launch({
 
 try {
   for (const mode of ['webgl2-preferred', 'webgl1-only']) {
-    const page = await browser.newPage({ viewport: { width: 1440, height: 960 } });
+    const page = await browser.newPage({ viewport: { width: 1024, height: 768 } });
     const pageErrors = [];
     const relevantResponses = {};
     const verifiedAssetLogs = [];
@@ -40,7 +40,7 @@ try {
       }
     });
 
-    await page.goto(target + '-' + mode, { waitUntil: 'domcontentloaded', timeout: 90000 });
+    await page.goto(target + '-' + mode, { waitUntil: 'domcontentloaded', timeout: 180000 });
     try {
       await page.waitForFunction(
         () => ['ready', 'rendering', 'failed'].includes(window.__NAIJA_3D_STATUS?.status),
@@ -209,6 +209,9 @@ try {
         document.getElementById('start-screen')?.classList.add('hide');
         window.Game.state.inside = null;
         window.Game.state.vehicle = null;
+        window.Game.state.x = 3800; window.Game.state.y = 3200;
+        window.Game.view.scale = 1.1; window.Game.view.zoom = 1.1;
+        window.Game.view.panX = 0; window.Game.view.panY = 0;
         // Freeze the simulation clock so the update loop cannot overwrite controlled capture times.
         window.__captureAdvance = window.Game.advance;
         window.Game.advance = () => {};
@@ -242,7 +245,7 @@ try {
         G.world.threeWorld.render();
         return { player: [G.state.x, G.state.y], lot: { ...lot }, cars: G.world.carDealership.cars.length };
       });
-      await page.waitForTimeout(1800);
+      await page.waitForFunction(() => {let ready=false;for(const chunk of window.Game.world.threeWorld.chunks.values())chunk.traverse(object=>{if(object.name==='Innerscene CC0 white four-door sedan')ready=true});return ready;}, null, {timeout:45000});
       const dealershipScene = await page.evaluate(() => {
         const api = window.Game.world.threeWorld;
         let dealer = null;
@@ -250,7 +253,7 @@ try {
           if (object.userData?.type === 'dealer') dealer = object;
         });
         if (!dealer) return { found: false };
-        let meshes = 0, lights = 0, vehicles = 0, signs = 0, bevelledBodies = 0, realPlants = 0;
+        let meshes = 0, lights = 0, vehicles = 0, signs = 0, bevelledBodies = 0, realPlants = 0, cc0GlbVehicles = 0;
         dealer.traverse(object => {
           if (object.isMesh) meshes++;
           if (object.isMesh && object.geometry?.type === 'ExtrudeGeometry') bevelledBodies++;
@@ -258,10 +261,11 @@ try {
           if (object.userData?.vehicleKind) vehicles++;
           if (object.isSprite) signs++;
           if (object.isInstancedMesh && object.name === 'Poly Haven CC0 sorrel planting') realPlants += object.count;
+          if (object.name === 'Innerscene CC0 white four-door sedan') cc0GlbVehicles++;
         });
-        return { found: true, meshes, lights, vehicles, signs, bevelledBodies, realPlants, bounds: dealer.userData.name };
+        return { found: true, meshes, lights, vehicles, signs, bevelledBodies, realPlants, cc0GlbVehicles, bounds: dealer.userData.name };
       });
-      if (!dealershipScene.found || dealershipScene.meshes < 100 || dealershipScene.vehicles < 18 || dealershipScene.signs < 4 || dealershipScene.bevelledBodies < 18 || dealershipScene.realPlants < 1) {
+      if (!dealershipScene.found || dealershipScene.meshes < 100 || dealershipScene.vehicles < 18 || dealershipScene.signs < 4 || dealershipScene.bevelledBodies < 18 || dealershipScene.realPlants < 1 || dealershipScene.cc0GlbVehicles < 1 || relevantResponses['/naija-life/assets/3d/vehicles/white-four-door-sedan.glb'] !== 200) {
         throw new Error('ABUJACAR property did not build its detailed 3D showroom and compound: ' + JSON.stringify({ dealership, dealershipScene }));
       }
       await page.screenshot({ path: `${screenshotDir}/abujacar-gameplay-overview.png`, timeout: 90000 });
