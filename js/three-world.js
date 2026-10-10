@@ -178,6 +178,7 @@ export async function createCity3D(G,diagnostic=()=>{}){
   for(const side of [-1,1]){box(g,l*.47,.48,side*w*.32,.08,.2,w*.22,lamp);box(g,-l*.47,.47,side*w*.32,.08,.22,w*.2,tail)}
   // Four detailed wheels with dark tyres, alloy hubs and subtle arches.
   for(const xx of [-l*.32,l*.32])for(const zz of [-w*.52,w*.52]){const tyre=new THREE.Mesh(wheelGeometry,rubber);tyre.rotation.z=Math.PI/2;tyre.position.set(xx,.38,zz);g.add(tyre);const hub=new THREE.Mesh(new THREE.CylinderGeometry(.22,.22,.22,10),chrome);hub.rotation.z=Math.PI/2;hub.position.set(xx,.38,zz*1.04);g.add(hub)}
+  if(large)g.scale.setScalar(1.28);
   g.userData.vehicleKind=kind;
   if(suv){for(const side of [-1,1])box(g,-l*.055,roofY+.13,side*w*.34,l*.55,.12,.12,chrome)}
   parent.add(g);return g;
@@ -335,8 +336,8 @@ export async function createCity3D(G,diagnostic=()=>{}){
   const site=G.world.carDealership,show=site.showroom,w=show.w,d=show.d;
   const g=new THREE.Group(),black=applyPbr(new THREE.MeshStandardMaterial({color:'#fff'}),dealerMetalPbr,{roughness:.42,metalness:.5,bumpScale:.018}),charcoal=applyPbr(new THREE.MeshStandardMaterial({color:'#fff'}),dealerMetalPbr,{roughness:.48,metalness:.42,bumpScale:.014}),panel=applyPbr(new THREE.MeshStandardMaterial({color:'#fff'}),dealerMetalPbr,{roughness:.38,metalness:.58,bumpScale:.012}),stone=applyPbr(new THREE.MeshStandardMaterial({color:'#fff'}),dealerStonePbr,{roughness:.78,metalness:.08,bumpScale:.04}),brass=mat('#d5a84d',.35,.56),lit=mat('#f5c46d',.5,.12);
   // Showroom glazing stays readable after dark while retaining tinted reflections in daylight.
-  const glass=new THREE.MeshStandardMaterial({color:'#c5e5e8',roughness:.12,metalness:.08,transparent:true,opacity:.48,depthWrite:false,emissive:'#ffb84f',emissiveIntensity:1.18});
-  const interiorGlow=new THREE.MeshStandardMaterial({color:'#ffe0a1',roughness:.42,emissive:'#ffab3c',emissiveIntensity:2.1});
+  const glass=new THREE.MeshPhysicalMaterial({color:'#b8d8df',roughness:.16,metalness:.16,clearcoat:.92,clearcoatRoughness:.12,transparent:true,opacity:.56,depthWrite:false,emissive:'#ffbf65',emissiveIntensity:.68,side:THREE.DoubleSide});
+  const interiorGlow=new THREE.MeshStandardMaterial({color:'#ffe7b3',roughness:.38,emissive:'#ffb84f',emissiveIntensity:3.2});
   customMaterials.push(glass,interiorGlow);flat(g,0,.06,0,w+18,d+18,stone);
   // Connected wings and an elevated central sign tower give the showroom a varied, multi-level silhouette.
   box(g,-w*.29,.38,d*.06,w*.38,18,d*.78,charcoal);
@@ -365,8 +366,14 @@ export async function createCity3D(G,diagnostic=()=>{}){
   }
   // Visible reception, display dais and lighting continue behind the glass.
   box(g,-w*.12,.5,d*.16,w*.24,1.15,5,stone);
+  // A deep porte-cochere and framed glass doors mark the customer entrance.
+  box(g,0,9.15,-d*.60,w*.48,.75,17,black);box(g,0,9.57,-d*.60,w*.43,.16,15,brass);
+  for(const x of [-w*.205,w*.205]){box(g,x,4.55,-d*.60,1.05,8.6,1.05,stone);box(g,x,9.65,-d*.60,1.4,.22,1.4,interiorGlow)}
+  box(g,0,4.05,-d*.55,w*.15,6.9,.34,glass);for(const x of [-w*.075,0,w*.075])box(g,x,4.05,-d*.565,.18,6.7,.5,brass);
+  box(g,0,.55,-d*.585,w*.27,.6,9,stone);
+
   // Glowing ceiling ribbons and floor washes keep showroom inventory legible through glass at night.
-  for(const z of [-d*.34,-d*.12,d*.12,d*.34]){box(g,0,19.2,z,w*.82,.22,.8,interiorGlow);box(g,0,.34,z,w*.84,.12,2.4,interiorGlow);}
+  for(const z of [-d*.34,-d*.12,d*.12,d*.34]){box(g,0,19.2,z,w*.82,.22,.8,interiorGlow);box(g,0,.34,z,w*.84,.12,2.4,interiorGlow);box(g,0,8.1,z,w*.78,.18,.65,interiorGlow);}
   for(let row=0;row<2;row++)for(let i=0;i<3;i++){
    const car=carModel(g,(i-1)*w*.28,-d*.18+row*d*.26,['#111820','#e7e1d4','#a9312c','#334954','#776c55','#e3dfd5'][row*3+i],i===2?'sport':i===1?'sedan':'suv',false,true);
    car.rotation.y=(i-1)*.09;
@@ -423,7 +430,7 @@ export async function createCity3D(G,diagnostic=()=>{}){
   for(const z of [25,60])for(const x of [-142,-118,118,142])bay(x,z,true);
   for(const x of [-142,-118,118,142])bay(x,112,false);
   // Two covered display courts flank the arrival forecourt and shelter the premium stock.
-  for(const [i,x] of [[0,-130],[1,130]]){
+  for(const [i,x] of [[0,-160],[1,160]]){
    const z=47;flat(root,x,.4,z,58,78,mat('#5b5f5d'));for(const dx of [-26,26])for(const dz of [-34,34])box(root,x+dx,.42,z+dz,.72,6.6,.72,metal);
    box(root,x,6.8,z,62,.7,84,mat('#596266',.42,.38));box(root,x,7.25,z,58,.16,80,mat('#a7afb0',.26,.22));
    const canopy=label(i===0?'PREMIUM SUV DISPLAY':'EXECUTIVE COLLECTION','#1b2429','#f3cd75',15);canopy.scale.set(38,5,1);canopy.position.set(x,7.6,z-37);root.add(canopy);
