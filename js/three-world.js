@@ -33,7 +33,7 @@ export async function createCity3D(G,diagnostic=()=>{}){
  const camera=new THREE.OrthographicCamera(-10,10,10,-10,.1,9000);diagnostic('camera-created');
  camera.up.set(0,1,0);
  const materialCache=new Map(),geometryCache=new Map(),planeCache=new Map(),labelCache=new Map(),textures=[],customMaterials=[],sharedGeometry=new WeakSet(),chunks=new Map(),chunkSize=G.world.mapMeta.chunkSize||800;
- let cc0FacadePbr=null,realShrubGeometry=null,realShrubMaterial=null;
+ let cc0FacadePbr=null,realShrubGeometry=null,realShrubMaterial=null,premiumVehiclePromise=null;
  try{
   const textureLoader=new THREE.TextureLoader(),gltfLoader=new GLTFLoader();
   const [facadeColor,facadeNormal,facadeArm,shrubAsset]=await Promise.all([
@@ -333,6 +333,19 @@ export async function createCity3D(G,diagnostic=()=>{}){
  function rockFormation(group,b){const cx=b.x+b.w/2,cz=b.y+b.h/2,random=seeded(5400),segments=12,levels=[0,27,92,177,258,315],radii=[148,142,119,91,53,15],vertices=[],indices=[],geometry=new THREE.BufferGeometry();for(let k=0;k<levels.length;k++){for(let i=0;i<segments;i++){const a=i/segments*Math.PI*2,jitter=.84+random()*.32,x=cx+Math.cos(a)*radii[k]*jitter,z=cz+Math.sin(a)*radii[k]*.76*jitter;vertices.push(x,terrainY(x,z)+levels[k],z)}}for(let k=0;k<levels.length-1;k++)for(let i=0;i<segments;i++){const a=k*segments+i,b0=k*segments+(i+1)%segments,c=(k+1)*segments+i,d=(k+1)*segments+(i+1)%segments;indices.push(a,c,b0,b0,c,d)}geometry.setAttribute('position',new THREE.Float32BufferAttribute(vertices,3));geometry.setIndex(indices);geometry.computeVertexNormals();const tones=[mat('#514f48',.98),mat('#615d54',.96),mat('#716b5f',.95),mat('#4c514c',.98),mat('#837969',.94)];for(let k=0;k<levels.length-1;k++)geometry.addGroup(k*segments*6,segments*6,k%tones.length);group.add(new THREE.Mesh(geometry,tones));
   const boulderGeo=new THREE.DodecahedronGeometry(12,0),boulders=new THREE.InstancedMesh(boulderGeo,tones[0],18),dummy=new THREE.Object3D();for(let i=0;i<18;i++){const a=random()*Math.PI*2,r=95+random()*70,x=cx+Math.cos(a)*r,z=cz+Math.sin(a)*r*.76;dummy.position.set(x,terrainY(x,z)+7+random()*6,z);dummy.rotation.set(random()*.25,random()*6.28,random()*.25);dummy.scale.set(.8+random()*1.4,.75+random()*1.6,.7+random()*1.3);dummy.updateMatrix();boulders.setMatrixAt(i,dummy.matrix)}group.add(boulders);
   const path=rect(group,cx,cz+139,b.w*.72,4,mat('#c2a980'));path.rotation.y=-.18;const plaque=label('ASO ROCK  ·  ABUJA','#303432','#f5eddd',20);plaque.scale.set(45,9,1);plaque.position.set(cx,terrainY(cx,cz)+91,cz-b.h*.44);group.add(plaque)}
+ function loadPremiumVehicle(){
+  if(!premiumVehiclePromise)premiumVehiclePromise=new GLTFLoader().loadAsync(new URL('../assets/3d/vehicles/white-four-door-sedan.glb',import.meta.url).href).then(({scene:source})=>{
+   source.updateMatrixWorld(true);const batches=new Map(),retained=new Set();
+   source.traverse(object=>{if(!object.isMesh)return;const material=Array.isArray(object.material)?object.material[0]:object.material;if(!material)return;const geometry=object.geometry.clone().applyMatrix4(object.matrixWorld),signature=Object.keys(geometry.attributes).sort().map(key=>key+':'+geometry.attributes[key].itemSize).join(','),key=material.uuid+'|'+signature;if(!batches.has(key))batches.set(key,{material,geometries:[]});batches.get(key).geometries.push(geometry);retained.add(material)});
+   const model=new THREE.Group();model.name='Innerscene CC0 white four-door sedan';model.userData.license='CC0';let meshCount=0;
+   for(const batch of batches.values()){const geometry=batch.geometries.length===1?batch.geometries[0]:mergeGeometries(batch.geometries,false);if(!geometry){for(const item of batch.geometries){const mesh=new THREE.Mesh(item,batch.material);mesh.castShadow=false;model.add(mesh);meshCount++}continue}for(const item of batch.geometries)if(item!==geometry)item.dispose();geometry.computeBoundingBox();geometry.computeBoundingSphere();sharedGeometry.add(geometry);const mesh=new THREE.Mesh(geometry,batch.material);mesh.castShadow=false;mesh.receiveShadow=true;model.add(mesh);meshCount++}
+   const bounds=new THREE.Box3().setFromObject(model),center=bounds.getCenter(new THREE.Vector3()),lift=-bounds.min.y+.035;for(const child of model.children){child.geometry.translate(-center.x,lift,-center.z);child.geometry.computeBoundingBox();child.geometry.computeBoundingSphere()}
+   for(const material of retained){customMaterials.push(material);for(const value of Object.values(material)){if(value?.isTexture&&!textures.includes(value))textures.push(value)}}
+   diagnostic('cc0-hero-vehicle-ready',{asset:'Innerscene white four-door sedan',meshes:meshCount,triangles:meshCount?model.children.reduce((n,o)=>n+(o.geometry.index?.count||o.geometry.attributes.position.count)/3,0):0,license:'CC0'});
+   return model
+  }).catch(error=>{premiumVehiclePromise=null;diagnostic('cc0-hero-vehicle-failed',{message:error?.message||String(error)});throw error});
+  return premiumVehiclePromise
+ }
  function showroomModel(){
   const site=G.world.carDealership,show=site.showroom,w=show.w,d=show.d;
   const g=new THREE.Group(),black=applyPbr(new THREE.MeshStandardMaterial({color:'#fff'}),dealerMetalPbr,{roughness:.42,metalness:.5,bumpScale:.018}),charcoal=applyPbr(new THREE.MeshStandardMaterial({color:'#fff'}),dealerMetalPbr,{roughness:.48,metalness:.42,bumpScale:.014}),panel=applyPbr(new THREE.MeshStandardMaterial({color:'#fff'}),dealerMetalPbr,{roughness:.38,metalness:.58,bumpScale:.012}),stone=applyPbr(new THREE.MeshStandardMaterial({color:'#fff'}),dealerStonePbr,{roughness:.78,metalness:.08,bumpScale:.04}),brass=mat('#d5a84d',.35,.56),lit=mat('#f5c46d',.5,.12);
@@ -376,7 +389,9 @@ export async function createCity3D(G,diagnostic=()=>{}){
   // Glowing ceiling ribbons and floor washes keep showroom inventory legible through glass at night.
   for(const z of [-d*.34,-d*.12,d*.12,d*.34]){box(g,0,19.2,z,w*.82,.22,.8,interiorGlow);box(g,0,.34,z,w*.84,.12,2.4,interiorGlow);box(g,0,8.1,z,w*.78,.18,.65,interiorGlow);}
   for(let row=0;row<2;row++)for(let i=0;i<3;i++){
-   const car=carModel(g,(i-1)*w*.28,-d*.18+row*d*.26,['#111820','#e7e1d4','#a9312c','#334954','#776c55','#e3dfd5'][row*3+i],i===2?'sport':i===1?'sedan':'suv',false,true);
+   const px=(i-1)*w*.28,pz=-d*.18+row*d*.26;
+   if(row===0&&i===0){const slot=new THREE.Group();slot.name='CC0 hero vehicle display';slot.position.set(px,0,pz);g.add(slot);const fallback=carModel(slot,0,0,'#e5e1d5','sedan',false,true);loadPremiumVehicle().then(model=>{if(!slot.parent)return;fallback.removeFromParent();const display=model.clone(true);display.scale.setScalar(1.08);slot.add(display)}).catch(()=>{});continue}
+   const car=carModel(g,px,pz,['#111820','#e7e1d4','#a9312c','#334954','#776c55','#e3dfd5'][row*3+i],i===2?'sport':i===1?'sedan':'suv',false,true);
    car.rotation.y=(i-1)*.09;
    const uplight=new THREE.PointLight('#ffd08a',16,34);uplight.position.set(-w*.31+i*w*.145,7,-d*.18+row*d*.26);g.add(uplight);
   }
