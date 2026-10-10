@@ -42,6 +42,25 @@ export async function createCity3D(G,diagnostic=()=>{}){
  updateLighting();
  function mat(hex,rough=.82,metalness=0){const k=hex+rough+metalness;if(!materialCache.has(k))materialCache.set(k,new THREE.MeshStandardMaterial({color:hex,roughness:rough,metalness}));return materialCache.get(k)}
  function grainTexture(seed){const c=document.createElement('canvas');c.width=c.height=128;const q=c.getContext('2d'),r=seeded(seed);q.fillStyle='#deded8';q.fillRect(0,0,128,128);for(let i=0;i<3000;i++){const v=Math.floor(112+r()*64);q.fillStyle=`rgba(${v},${v},${v},${.04+r()*.12})`;q.fillRect(r()*128,r()*128,1+r()*2,1+r()*2)}const t=new THREE.CanvasTexture(c);t.colorSpace=THREE.SRGBColorSpace;t.wrapS=t.wrapT=THREE.RepeatWrapping;t.repeat.set(1,1);t.anisotropy=renderer.capabilities.getMaxAnisotropy();textures.push(t);return t}
+ // Small, reusable PBR facade tiles add panel joints, mineral variation and relief without
+ // multiplying draw calls across the 3,568 instanced city lots.
+ function architecturalSurface(seed,kind='stone'){
+  const size=512,c=document.createElement('canvas'),r=document.createElement('canvas'),n=document.createElement('canvas');c.width=c.height=r.width=r.height=n.width=n.height=size;
+  const ctx=c.getContext('2d'),rough=r.getContext('2d'),normal=n.getContext('2d'),rand=seeded(seed),base=kind==='metal'?[37,43,47]:kind==='paving'?[137,137,128]:kind==='glass'?[57,91,101]:[175,168,151];
+  ctx.fillStyle=`rgb(${base.join(',')})`;ctx.fillRect(0,0,size,size);rough.fillStyle='#c4c4c4';rough.fillRect(0,0,size,size);normal.fillStyle='rgb(128,128,255)';normal.fillRect(0,0,size,size);
+  for(let i=0;i<4300;i++){const x=rand()*size,y=rand()*size,v=(rand()-.5)*(kind==='metal'?20:27);ctx.fillStyle=`rgba(${v>0?'255':'0'},${v>0?'255':'0'},${v>0?'255':'0'},${Math.abs(v)/210})`;ctx.fillRect(x,y,1+rand()*4,1+rand()*3);}
+  const rows=kind==='paving'?36:kind==='metal'?9:8,cols=kind==='paving'?36:kind==='metal'?6:8;ctx.lineWidth=kind==='paving'?1:3;ctx.strokeStyle=kind==='metal'?'rgba(5,8,10,.75)':'rgba(28,31,29,.44)';rough.strokeStyle='#777';normal.strokeStyle='rgb(104,128,247)';
+  for(let y=0;y<=rows;y++){const yy=Math.round(y*size/rows);ctx.beginPath();ctx.moveTo(0,yy);ctx.lineTo(size,yy);ctx.stroke();rough.beginPath();rough.moveTo(0,yy);rough.lineTo(size,yy);rough.stroke();normal.beginPath();normal.moveTo(0,yy);normal.lineTo(size,yy);normal.stroke()}
+  for(let x=0;x<=cols;x++){const xx=Math.round(x*size/cols);ctx.beginPath();ctx.moveTo(xx,0);ctx.lineTo(xx,size);ctx.stroke();rough.beginPath();rough.moveTo(xx,0);rough.lineTo(xx,size);rough.stroke();normal.beginPath();normal.moveTo(xx,0);normal.lineTo(xx,size);normal.stroke()}
+  if(kind==='metal'){for(let y=12;y<size;y+=size/rows)for(let x=12;x<size;x+=size/cols){ctx.fillStyle='rgba(210,190,143,.55)';ctx.beginPath();ctx.arc(x,y,2.2,0,Math.PI*2);ctx.fill()}}
+  for(const canvas of [c,r,n]){const q=canvas.getContext('2d');q.imageSmoothingEnabled=true}
+  const map=new THREE.CanvasTexture(c),roughnessMap=new THREE.CanvasTexture(r),bumpMap=new THREE.CanvasTexture(n);
+  map.colorSpace=THREE.SRGBColorSpace;for(const t of [map,roughnessMap,bumpMap]){t.wrapS=t.wrapT=THREE.RepeatWrapping;t.anisotropy=Math.min(4,renderer.capabilities.getMaxAnisotropy());textures.push(t)}
+  return{map,roughnessMap,bumpMap};
+ }
+ const cityPbr=architecturalSurface(181,'stone'),dealerMetalPbr=architecturalSurface(291,'metal'),dealerStonePbr=architecturalSurface(391,'stone'),dealerPavingPbr=architecturalSurface(491,'paving');
+ const cityFacadeMaterial=new THREE.MeshStandardMaterial({color:'#fff',...cityPbr,roughness:.76,metalness:.12,bumpScale:.025});
+ function applyPbr(material,surface,{roughness=.72,metalness=.14,bumpScale=.035}={}){material.map=surface.map;material.roughnessMap=surface.roughnessMap;material.bumpMap=surface.bumpMap;material.roughness=roughness;material.metalness=metalness;material.bumpScale=bumpScale;material.needsUpdate=true;return material}
  mats.road.map=grainTexture(31);mats.road.needsUpdate=true;mats.concrete.map=grainTexture(61);mats.concrete.needsUpdate=true;mats.soil.map=grainTexture(91);mats.soil.needsUpdate=true;
  function boxGeometry(x,y,z){const k=x+':'+y+':'+z;if(!geometryCache.has(k)){const geometry=new THREE.BoxGeometry(x,y,z);geometryCache.set(k,geometry);sharedGeometry.add(geometry)}return geometryCache.get(k)}
  const wheelGeometry=new THREE.CylinderGeometry(.38,.38,.2,10),personBodyGeometry=new THREE.CapsuleGeometry(.34,.65,3,6),personHeadGeometry=new THREE.SphereGeometry(.27,8,6);sharedGeometry.add(wheelGeometry);sharedGeometry.add(personBodyGeometry);sharedGeometry.add(personHeadGeometry);
@@ -113,12 +132,14 @@ export async function createCity3D(G,diagnostic=()=>{}){
   }
   return g;
  }
+ const vehicleBodyCache=new Map();
+ function vehicleBody(kind,l,w,h){if(vehicleBodyCache.has(kind))return vehicleBodyCache.get(kind);const profile=new THREE.Shape();profile.moveTo(-l*.5,.22);profile.lineTo(-l*.5,.62);profile.quadraticCurveTo(-l*.49,.78,-l*.39,.8);profile.lineTo(-l*.23,.82);profile.lineTo(-l*.12,.91);profile.quadraticCurveTo(-l*.04,.97,l*.12,.94);profile.lineTo(l*.28,.85);profile.lineTo(l*.42,.73);profile.quadraticCurveTo(l*.5,.69,l*.5,.55);profile.lineTo(l*.5,.22);profile.lineTo(l*.4,.17);profile.lineTo(-l*.39,.17);profile.closePath();const depth=w*.82,geo=new THREE.ExtrudeGeometry(profile,{depth,steps:1,bevelEnabled:true,bevelSegments:2,bevelSize:.07,bevelThickness:.055,curveSegments:5});geo.translate(0,0,-depth/2);geo.computeVertexNormals();sharedGeometry.add(geo);vehicleBodyCache.set(kind,geo);return geo}
  function carModel(parent,x,z,tint,kind='sedan',large=false,local=false){
   const g=new THREE.Group();g.position.set(x,local?0:terrainY(x,z),z);
   const bus=kind==='bus'||kind==='minibus',suv=kind==='suv',sport=kind==='sport',w=bus?2.65:suv?2.18:1.9,l=bus?7:suv?5.15:sport?4.7:4.45,h=bus?2.8:suv?2.05:sport?1.25:1.48,paint=mat(tint||'#263544',.31,.42),glass=mat('#7195a1',.2,.18),rubber=mat('#20262a',.92),chrome=mat('#a6aca9',.28,.72),lamp=mat('#fff0ba',.22,.1),tail=mat('#bd4138',.35,.1);
-  // Separate chassis, bonnet and rear deck give each stock car a recognisable profile.
-  box(g,0,.1,0,l*.94,.64,w*.91,paint);box(g,l*.25,.48,0,l*.43,.24,w*.84,paint);box(g,-l*.34,.44,0,l*.27,.22,w*.82,paint);
-  box(g,-l*.055,.61,0,l*(bus?.64:suv?.53:sport?.46:.5),h*.48,w*.79,paint);
+  // A shared, bevelled body mesh gives stock cars a curved bonnet, shoulder and wheel-line
+  // silhouette while keeping vehicle inventory cheap to draw.
+  const shell=new THREE.Mesh(vehicleBody(kind,l,w,h),paint);shell.castShadow=false;shell.position.y=.08;g.add(shell);
   const roofY=.61+h*.48;box(g,-l*.055,roofY-.08,0,l*(bus?.62:suv?.49:.43),.16,w*.78,sport?chrome:paint);
   // Individually framed windshields and side windows catch the showroom lights.
   box(g,l*.17,.78,0,.13,h*.3,w*.69,glass);box(g,-l*.28,.77,0,.12,h*.29,w*.68,glass);
@@ -184,7 +205,13 @@ export async function createCity3D(G,diagnostic=()=>{}){
   // Each plot reads as its own small compound, with a gated wall, garden beds and a drive.
   const wallH=1.1,edgeZ=d/2+5,frontZ=-d/2-5;box(g,0,.2,edgeZ,w+10,wallH,.55,base);box(g,-w/2-5,.2,0,.55,wallH,d+10,base);box(g,w/2+5,.2,0,.55,wallH,d+10,base);for(const side of [-1,1])box(g,side*(w*.25+1),.2,frontZ,(w-6)/2,wallH,.55,base);for(const x of [-w/2-5,w/2+5])box(g,x,.25,frontZ,1.15,2.4,1.15,trim);
   for(let i=0;i<3;i++){const x=(i-1)*w*.31,z=d*.23,bed=new THREE.Mesh(new THREE.CylinderGeometry(2.1,2.5,.55,7),mat(i===1?'#657c4d':'#6c8151'));bed.position.set(x,.58,z);g.add(bed);const plant=new THREE.Mesh(new THREE.SphereGeometry(2.2,7,5),i%2?mats.leaf2:mats.leaf);plant.position.set(x,2.7,z);plant.scale.set(1,1.15,1);g.add(plant)}
-  for(const x of [-w*.42,w*.42]){box(g,x,1.3,d/2+1.3,.25,2.2,.25,base);box(g,x,1.5,d/2+2.7,2.1,.12,2.7,roof)}return g;
+   for(const x of [-w*.42,w*.42]){box(g,x,1.3,d/2+1.3,.25,2.2,.25,base);box(g,x,1.5,d/2+2.7,2.1,.12,2.7,roof)}
+   // Small player-scale fittings make the close LOD houses read as occupied homes.
+   for(const side of [-1,1]){box(g,side*w*.39,1.25,-d/2-.27,Math.min(4.3,w*.22),1.45,.14,window);box(g,side*w*.39,2.05,-d/2-.28,Math.min(4.7,w*.24),.16,.28,trim);box(g,side*w*.39,2.15,-d*.08,2.6,1.3,1.1,mat('#9ea7a5',.52,.4));box(g,side*w*.39,2.85,-d*.08,2.9,.16,1.3,trim)}
+   box(g,0,.36,-d/2-.48,Math.max(2.4,w*.13),2.35,.28,mat('#483c34'));
+   // Crisp eaves and gutters give each pitched roof a finished edge.
+   for(const side of [-1,1]){box(g,side*(w/2+.42),3.55,0,.22,.28,d+1,trim);box(g,0,3.55,side*(d/2+.42),w+1,.28,.22,trim)}
+   return g;
  }
  function houseRoofGeometry(){const g=new THREE.BufferGeometry(),p=[-.5,0,-.5,.5,0,-.5,0,1,-.5,-.5,0,.5,.5,0,.5,0,1,.5];g.setAttribute('position',new THREE.Float32BufferAttribute(p,3));g.setIndex([0,1,2,3,5,4,0,3,4,0,4,1,1,4,5,1,5,2]);g.computeVertexNormals();sharedGeometry.add(g);return g}
  const distantHouseRoof=houseRoofGeometry();
@@ -194,7 +221,7 @@ export async function createCity3D(G,diagnostic=()=>{}){
  function buildCityFabric(group,lots,cx,cz){
   if(!lots?.length)return;
   const cube=boxGeometry(1,1,1),floorsOf=b=>clamp(b.floors||2,1,24),windowCapacity=lots.reduce((n,b)=>{const cols=Math.max(2,Math.ceil(b.w/14)),rows=Math.max(2,Math.ceil(b.h/14));return n+floorsOf(b)*2*(cols+rows)},0),bandCapacity=lots.reduce((n,b)=>n+Math.max(0,floorsOf(b)-1)*4,0),balconyCapacity=lots.reduce((n,b)=>n+((b.type==='apartment'||b.type==='villa'||b.type==='house'||floorsOf(b)>=8)?4:0),0);
-  const white=mat('#ffffff',.76),pads=new THREE.InstancedMesh(cube,mat('#ffffff',.96),lots.length),bodyLow=new THREE.InstancedMesh(cube,white,lots.length),bodyTower=new THREE.InstancedMesh(cube,white,lots.length),roof=new THREE.InstancedMesh(cube,white,lots.length),roofFeatures=new THREE.InstancedMesh(new THREE.ConeGeometry(.72,.38,4),white,lots.length),parapets=new THREE.InstancedMesh(cube,white,lots.length*4),bands=new THREE.InstancedMesh(cube,white,Math.max(1,bandCapacity)),fins=new THREE.InstancedMesh(cube,white,lots.length*8),windowFrames=new THREE.InstancedMesh(cube,mat('#d6d2c6',.58,.12),windowCapacity),windowsOn=new THREE.InstancedMesh(cube,mats.windowLit,windowCapacity),windowsOff=new THREE.InstancedMesh(cube,mats.windowDark,windowCapacity),balconies=new THREE.InstancedMesh(cube,mat('#a4a49b',.66,.22),Math.max(1,balconyCapacity)),balconyRails=new THREE.InstancedMesh(cube,mat('#47545a',.46,.38),Math.max(1,balconyCapacity)),awnings=new THREE.InstancedMesh(cube,white,lots.length),units=new THREE.InstancedMesh(cube,mat('#a8a397',.86),lots.length*2),dummy=new THREE.Object3D();
+  const white=mat('#ffffff',.76),pads=new THREE.InstancedMesh(cube,mat('#ffffff',.96),lots.length),bodyLow=new THREE.InstancedMesh(cube,cityFacadeMaterial,lots.length),bodyTower=new THREE.InstancedMesh(cube,cityFacadeMaterial,lots.length),roof=new THREE.InstancedMesh(cube,white,lots.length),roofFeatures=new THREE.InstancedMesh(new THREE.ConeGeometry(.72,.38,4),white,lots.length),parapets=new THREE.InstancedMesh(cube,white,lots.length*4),bands=new THREE.InstancedMesh(cube,white,Math.max(1,bandCapacity)),fins=new THREE.InstancedMesh(cube,white,lots.length*8),windowFrames=new THREE.InstancedMesh(cube,mat('#d6d2c6',.58,.12),windowCapacity),windowsOn=new THREE.InstancedMesh(cube,mats.windowLit,windowCapacity),windowsOff=new THREE.InstancedMesh(cube,mats.windowDark,windowCapacity),balconies=new THREE.InstancedMesh(cube,mat('#a4a49b',.66,.22),Math.max(1,balconyCapacity)),balconyRails=new THREE.InstancedMesh(cube,mat('#47545a',.46,.38),Math.max(1,balconyCapacity)),awnings=new THREE.InstancedMesh(cube,white,lots.length),units=new THREE.InstancedMesh(cube,mat('#a8a397',.86),lots.length*2),dummy=new THREE.Object3D();
   for(const mesh of [pads,bodyLow,bodyTower,roof,roofFeatures,parapets,bands,fins,windowFrames,windowsOn,windowsOff,balconies,balconyRails,awnings,units])mesh.castShadow=false;
   const cityPalettes={residential:['#ddcfb7','#c9b79d','#e7ded0','#d5c6ae','#bba98f'],office:['#aebac0','#7e9299','#c7cbca','#66777f','#d6d4ca'],shop:['#d4c4a8','#bdab8e','#d9d3c5','#c8b497','#9faeb0'],warehouse:['#aaa9a1','#c1baaa','#8e9a99','#bcb7a9'],institution:['#ddd6c7','#c9c1b1','#aaa99e','#e5dfd2']},roofPalette=['#3e484c','#755044','#59666a','#8d7457','#465762'],facadeTrim=['#e8dfcd','#d2c8b5','#a9b7b7','#c3a97e'];
   let frameIndex=0,onIndex=0,offIndex=0,bandIndex=0,finIndex=0,parapetIndex=0,balconyIndex=0,awningIndex=0,unitIndex=0,roofFeatureIndex=0;
@@ -276,7 +303,7 @@ export async function createCity3D(G,diagnostic=()=>{}){
   const path=rect(group,cx,cz+139,b.w*.72,4,mat('#c2a980'));path.rotation.y=-.18;const plaque=label('ASO ROCK  ·  ABUJA','#303432','#f5eddd',20);plaque.scale.set(45,9,1);plaque.position.set(cx,terrainY(cx,cz)+91,cz-b.h*.44);group.add(plaque)}
  function showroomModel(){
   const site=G.world.carDealership,show=site.showroom,w=show.w,d=show.d;
-  const g=new THREE.Group(),black=mat('#171c20',.42,.34),charcoal=mat('#242b2f',.38,.34),panel=mat('#30373a',.42,.38),stone=mat('#a99e8d',.72,.1),brass=mat('#d5a84d',.35,.56),lit=mat('#f5c46d',.5,.12);
+  const g=new THREE.Group(),black=applyPbr(new THREE.MeshStandardMaterial({color:'#fff'}),dealerMetalPbr,{roughness:.42,metalness:.5,bumpScale:.018}),charcoal=applyPbr(new THREE.MeshStandardMaterial({color:'#fff'}),dealerMetalPbr,{roughness:.48,metalness:.42,bumpScale:.014}),panel=applyPbr(new THREE.MeshStandardMaterial({color:'#fff'}),dealerMetalPbr,{roughness:.38,metalness:.58,bumpScale:.012}),stone=applyPbr(new THREE.MeshStandardMaterial({color:'#fff'}),dealerStonePbr,{roughness:.78,metalness:.08,bumpScale:.04}),brass=mat('#d5a84d',.35,.56),lit=mat('#f5c46d',.5,.12);
   // Showroom glazing stays readable after dark while retaining tinted reflections in daylight.
   const glass=new THREE.MeshStandardMaterial({color:'#c5e5e8',roughness:.12,metalness:.08,transparent:true,opacity:.48,depthWrite:false,emissive:'#ffb84f',emissiveIntensity:1.18});
   const interiorGlow=new THREE.MeshStandardMaterial({color:'#ffe0a1',roughness:.42,emissive:'#ffab3c',emissiveIntensity:2.1});
@@ -329,7 +356,7 @@ export async function createCity3D(G,diagnostic=()=>{}){
  function dealership(group,b){
   const root=new THREE.Group(),site=G.world.carDealership,lot=site.lot,cx=lot.x+lot.w/2,cz=lot.y+lot.h/2;
   root.position.set(cx,terrainY(cx,cz),cz);root.rotation.y=Number(b.rotation)||0;root.scale.setScalar(Number(b.scale)||1);
-  const paving=mat('#626762'),drive=mat('#454b4f'),edge=mat('#d4c8ad'),fence=mat('#1e272b',.58,.42),stone=mat('#a79d8b'),metal=mat('#4a5559',.46,.5),yellow=mat('#e3b84c'),white=mat('#f0eee4'),warm=mat('#f7cb82');
+  const paving=applyPbr(new THREE.MeshStandardMaterial({color:'#fff'}),dealerPavingPbr,{roughness:.9,metalness:.02,bumpScale:.06}),drive=mat('#454b4f'),edge=mat('#d4c8ad'),fence=mat('#1e272b',.58,.42),stone=applyPbr(new THREE.MeshStandardMaterial({color:'#fff'}),dealerStonePbr,{roughness:.78,metalness:.08,bumpScale:.04}),metal=applyPbr(new THREE.MeshStandardMaterial({color:'#fff'}),dealerMetalPbr,{roughness:.48,metalness:.48,bumpScale:.02}),yellow=mat('#e3b84c'),white=mat('#f0eee4'),warm=mat('#f7cb82');
   flat(root,0,.08,0,lot.w+34,lot.h+38,mat('#7a806f'));flat(root,0,.22,0,lot.w,lot.h,paving);
   // The boulevard-facing apron links the forecourt to the existing Idu service road.
   flat(root,0,.3,-lot.h/2-18,lot.w-42,34,drive);flat(root,0,.37,-lot.h/2-35,lot.w-24,4,edge);

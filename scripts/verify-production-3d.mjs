@@ -127,6 +127,11 @@ try {
       const world = window.Game.world;
       const names = new Set((world.buildings || []).map(b => b.name));
       const builders = world.assetBuilders || {};
+      let mappedCityMaterials = 0;
+      for (const chunk of api?.chunks?.values?.() || []) chunk.traverse(object => {
+        const materials = Array.isArray(object.material) ? object.material : [object.material];
+        if (object.isInstancedMesh && materials.some(material => material?.map && material?.roughnessMap && material?.bumpMap)) mappedCityMaterials++;
+      });
       return {
         status: window.__NAIJA_3D_STATUS.status,
         stage: window.__NAIJA_3D_STATUS.stage,
@@ -137,6 +142,10 @@ try {
         dimensions: [window.Game.W, window.Game.H],
         districts: world.districts?.length || 0,
         locations: world.buildings?.length || 0,
+        cityLots: world.cityLots?.length || 0,
+        residentialLots: world.houseLots?.length || 0,
+        roadSegments: (world.roadX?.length || 0) + (world.roadY?.length || 0),
+        mappedCityMaterials,
         destinations: {
           abujacar: names.has('ABUJACAR CAR DEALERSHIP'),
           devoltMould: names.has('Devolt Mould Flagship'),
@@ -160,6 +169,7 @@ try {
       throw new Error(mode + ': the live page did not produce a visible 3D frame: ' + JSON.stringify(result));
     }
     if (result.dimensions[0] !== 14400 || result.dimensions[1] !== 9600 || result.districts < 20 ||
+        result.cityLots !== 3568 || result.residentialLots !== 320 || result.roadSegments !== 576 || result.mappedCityMaterials < 1 ||
         (result.stats.cityLots || 0) < 500 || (result.stats.roundabouts || 0) < 10 || (result.stats.trees || 0) < 15 ||
         !result.destinations.abujacar || !result.destinations.devoltMould || !result.destinations.airport ||
         result.destinations.restaurants !== 7 || result.destinations.carStands !== 3 ||
@@ -183,9 +193,20 @@ try {
         window.Game.world.threeWorld.render();
       });
       await page.screenshot({ path: `${screenshotDir}/abuja-city-night.png` });
+      await page.evaluate(() => {
+        const G = window.Game;
+        G.state.inside = null; G.state.vehicle = null; G.ui.panel = null;
+        G.state.x = 3600; G.state.y = 3200;
+        G.state.hour = 12; G.state.minute = 30;
+        G.view.scale = .46; G.view.zoom = .46;
+        G.world.threeWorld.render();
+      });
+      await page.waitForTimeout(1800);
+      await page.screenshot({ path: `${screenshotDir}/abuja-city-aerial.png`, timeout: 90000 });
       const dealership = await page.evaluate(() => {
         const G = window.Game, lot = G.world.carDealership.lot;
         G.state.inside = null; G.state.vehicle = null; G.ui.panel = null;
+        G.view.scale = 1; G.view.zoom = 1;
         G.state.x = lot.x + lot.w / 2; G.state.y = lot.y - 38;
         G.state.hour = 12; G.state.minute = 20;
         G.world.threeWorld.render();
@@ -199,16 +220,17 @@ try {
           if (object.userData?.type === 'dealer') dealer = object;
         });
         if (!dealer) return { found: false };
-        let meshes = 0, lights = 0, vehicles = 0, signs = 0;
+        let meshes = 0, lights = 0, vehicles = 0, signs = 0, bevelledBodies = 0;
         dealer.traverse(object => {
           if (object.isMesh) meshes++;
+          if (object.isMesh && object.geometry?.type === 'ExtrudeGeometry') bevelledBodies++;
           if (object.isLight) lights++;
           if (object.userData?.vehicleKind) vehicles++;
           if (object.isSprite) signs++;
         });
-        return { found: true, meshes, lights, vehicles, signs, bounds: dealer.userData.name };
+        return { found: true, meshes, lights, vehicles, signs, bevelledBodies, bounds: dealer.userData.name };
       });
-      if (!dealershipScene.found || dealershipScene.meshes < 100 || dealershipScene.vehicles < 18 || dealershipScene.signs < 4) {
+      if (!dealershipScene.found || dealershipScene.meshes < 100 || dealershipScene.vehicles < 18 || dealershipScene.signs < 4 || dealershipScene.bevelledBodies < 18) {
         throw new Error('ABUJACAR property did not build its detailed 3D showroom and compound: ' + JSON.stringify({ dealership, dealershipScene }));
       }
       await page.screenshot({ path: `${screenshotDir}/abujacar-gameplay-overview.png`, timeout: 90000 });
@@ -219,7 +241,7 @@ try {
       });
       await page.waitForTimeout(300);
       await page.screenshot({ path: `${screenshotDir}/abujacar-gameplay-close.png`, timeout: 90000 });
-      console.log(JSON.stringify({ visualCheckpoints: [`${screenshotDir}/abuja-city-day.png`, `${screenshotDir}/abuja-city-night.png`, `${screenshotDir}/abujacar-gameplay-overview.png`, `${screenshotDir}/abujacar-gameplay-close.png`], dealership, dealershipScene }));
+      console.log(JSON.stringify({ visualCheckpoints: [`${screenshotDir}/abuja-city-day.png`, `${screenshotDir}/abuja-city-night.png`, `${screenshotDir}/abuja-city-aerial.png`, `${screenshotDir}/abujacar-gameplay-overview.png`, `${screenshotDir}/abujacar-gameplay-close.png`], dealership, dealershipScene }));
     }
 
     console.log(JSON.stringify({ mode, target, requiredFiles: relevantResponses, result, pageErrors }, null, 2));
