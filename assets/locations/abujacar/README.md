@@ -1,5 +1,5 @@
-# ABUJACAR car stand
+# ABUJACAR luxury car dealership
 
-The ABUJACAR site is the first premium, purpose-built procedural location. Its definition and surveyed footprint are in `js/world.js`; `js/three-world.js` assembles its showroom, interior display cars, forecourt vehicles, parking canopies, service bay, security booth, fence, gate, landscaping, and lighting.
+The ABUJACAR flagship is a purpose-built procedural location. `js/world.js` defines its 340 m by 280 m compound, 140 m by 92 m glass showroom, service wing, and 24 vehicle display/parking positions. `js/three-world.js` assembles the multi-section showroom, showroom inventory, forecourt, two covered display canopies, customer parking, security booth, barriers, perimeter fencing, signage, lighting, and planting.
 
-The property occupies a 270 m by 220 m lot. The two-level showroom is 92 m by 68 m. Its builder follows the common location-builder interface and the lot can be repositioned with `G.world.repositionLocation('abujacar_car_stand', { x, y, rotation, scale })`.
+The builder follows the shared location-builder interface. The compound can be repositioned with `G.world.repositionLocation('abujacar_car_stand', { x, y, rotation, scale })`.
