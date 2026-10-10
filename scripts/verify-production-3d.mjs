@@ -124,7 +124,7 @@ try {
       throw new Error(mode + ': phone, bag, navigation, camera, or day/night UI check failed: ' + JSON.stringify({ interaction, missingScreens }));
     }
 
-    const result = await page.evaluate(movement => {
+    const result = await page.evaluate(({ movement, verifiedAssetLogs }) => {
       const api = window.Game.world.threeWorld;
       const canvas = api?.renderer?.domElement;
       const gl = api?.renderer?.getContext();
@@ -164,7 +164,7 @@ try {
         phoneAndBagVerified: true,
         visible: canvas ? getComputedStyle(canvas).display !== 'none' : false
       };
-    }, movement);
+    }, { movement, verifiedAssetLogs });
 
     if (pageErrors.length) throw new Error(mode + ': browser JavaScript errors: ' + JSON.stringify(pageErrors));
     if (Object.values(relevantResponses).some(status => status >= 400)) {
