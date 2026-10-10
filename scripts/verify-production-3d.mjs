@@ -211,14 +211,14 @@ try {
       if (!dealershipScene.found || dealershipScene.meshes < 100 || dealershipScene.vehicles < 18 || dealershipScene.signs < 4) {
         throw new Error('ABUJACAR property did not build its detailed 3D showroom and compound: ' + JSON.stringify({ dealership, dealershipScene }));
       }
-      await page.screenshot({ path: `${screenshotDir}/abujacar-gameplay-overview.png` });
+      await page.screenshot({ path: `${screenshotDir}/abujacar-gameplay-overview.png`, timeout: 90000 });
       await page.evaluate(() => {
         window.Game.view.scale = Math.max(window.Game.view.scale || 1, 1.9);
         window.Game.view.zoom = Math.max(window.Game.view.zoom || 1, 1.9);
         window.Game.world.threeWorld.render();
       });
       await page.waitForTimeout(300);
-      await page.screenshot({ path: `${screenshotDir}/abujacar-gameplay-close.png` });
+      await page.screenshot({ path: `${screenshotDir}/abujacar-gameplay-close.png`, timeout: 90000 });
       console.log(JSON.stringify({ visualCheckpoints: [`${screenshotDir}/abuja-city-day.png`, `${screenshotDir}/abuja-city-night.png`, `${screenshotDir}/abujacar-gameplay-overview.png`, `${screenshotDir}/abujacar-gameplay-close.png`], dealership, dealershipScene }));
     }
 
