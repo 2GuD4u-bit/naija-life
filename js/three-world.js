@@ -354,9 +354,13 @@ export async function createCity3D(G,diagnostic=()=>{}){
   const interiorGlow=new THREE.MeshStandardMaterial({color:'#ffe7b3',roughness:.38,emissive:'#ffb84f',emissiveIntensity:3.2});
   customMaterials.push(glass,interiorGlow);flat(g,0,.06,0,w+18,d+18,stone);
   // Connected wings and an elevated central sign tower give the showroom a varied, multi-level silhouette.
-  box(g,-w*.29,.38,d*.06,w*.38,18,d*.78,charcoal);
-  box(g,w*.30,.38,d*.03,w*.35,20,d*.74,charcoal);
-  box(g,-w*.08,.38,-d*.05,w*.46,27,d*.57,black);
+  // Keep the showroom volume genuinely open behind the curtain wall: opaque box cores
+  // here hid the display inventory and made the glass read as a black box from gameplay.
+  for(const x of [-w*.475,w*.475])for(const side of [-1,1]){
+   box(g,x,12.2,side*d*.49,1.4,23,1.6,panel);
+  }
+  // Rear service cores frame the open display floor without blocking cars from the street view.
+  for(const x of [-w*.34,w*.34])box(g,x,9.4,d*.34,w*.12,18.4,d*.12,charcoal);
   box(g,-w*.40,18,d*.18,w*.16,11,d*.42,panel);
   box(g,w*.40,20,d*.10,w*.15,14,d*.44,panel);
   box(g,0,27.4,-d*.02,w*.34,8,d*.35,black);
@@ -389,10 +393,10 @@ export async function createCity3D(G,diagnostic=()=>{}){
   // Glowing ceiling ribbons and floor washes keep showroom inventory legible through glass at night.
   for(const z of [-d*.34,-d*.12,d*.12,d*.34]){box(g,0,19.2,z,w*.82,.22,.8,interiorGlow);box(g,0,.34,z,w*.84,.12,2.4,interiorGlow);box(g,0,8.1,z,w*.78,.18,.65,interiorGlow);}
   for(let row=0;row<2;row++)for(let i=0;i<3;i++){
-   const px=(i-1)*w*.28,pz=-d*.18+row*d*.26;
-   if(row===0&&i===0){const slot=new THREE.Group();slot.name='CC0 hero vehicle display';slot.position.set(px,0,pz);g.add(slot);const fallback=carModel(slot,0,0,'#e5e1d5','sedan',false,true);loadPremiumVehicle().then(model=>{if(!slot.parent)return;fallback.removeFromParent();const display=model.clone(true);display.scale.setScalar(1.08);slot.add(display)}).catch(()=>{});continue}
+   const px=(i-1)*w*.19,pz=-d*.25+row*d*.20;
+   if(row===0&&i===0){const slot=new THREE.Group();slot.name='CC0 hero vehicle display';slot.position.set(px,0,pz);g.add(slot);const fallback=carModel(slot,0,0,'#e5e1d5','sedan',false,true);loadPremiumVehicle().then(model=>{if(!slot.parent)return;fallback.removeFromParent();const display=model.clone(true);display.scale.setScalar(1.45);slot.add(display)}).catch(()=>{});continue}
    const car=carModel(g,px,pz,['#111820','#e7e1d4','#a9312c','#334954','#776c55','#e3dfd5'][row*3+i],i===2?'sport':i===1?'sedan':'suv',false,true);
-   car.rotation.y=(i-1)*.09;
+   car.rotation.y=(i-1)*.09;car.scale.setScalar(1.6);
    const uplight=new THREE.PointLight('#ffd08a',16,34);uplight.position.set(-w*.31+i*w*.145,7,-d*.18+row*d*.26);g.add(uplight);
   }
   for(const x of [-w*.32,0,w*.32]){const planter=new THREE.Mesh(new THREE.CylinderGeometry(2.3,3.1,1.8,10),mat('#5e584f'));planter.position.set(x,1.2,d*.25);g.add(planter);const plant=new THREE.Mesh(new THREE.ConeGeometry(3.4,8.5,7),mats.leaf);plant.position.set(x,5.8,d*.25);g.add(plant)}
@@ -453,7 +457,7 @@ export async function createCity3D(G,diagnostic=()=>{}){
    const down=new THREE.PointLight('#ffd18b',42,58);down.position.set(x,6,z);root.add(down);
   }
   // All inventory uses the shared reusable 3D vehicle geometry.
-  (site.cars||[]).forEach((car,i)=>{if(car.interior)return;const px=car.x-cx,pz=car.y-cz,vehicle=carModel(root,px,pz,car.color,car.kind,false,true);vehicle.rotation.y=(i%5===0?Math.PI/2:i%3===0?-.08:.08);bay(px,pz,car.kind==='suv')});
+  (site.cars||[]).forEach((car,i)=>{if(car.interior)return;const px=car.x-cx,pz=car.y-cz,vehicle=carModel(root,px,pz,car.color,car.kind,false,true);vehicle.rotation.y=(i%5===0?Math.PI/2:i%3===0?-.08:.08);vehicle.scale.setScalar(1.55);bay(px,pz,car.kind==='suv')});
   // Planned planting beds, palms, lamps, and low landscape illumination.
   function palm(x,z,scale=1){box(root,x,.35,z,.8,7*scale,.8,mats.trunk);for(let arm=0;arm<6;arm++){const leaf=new THREE.Mesh(new THREE.ConeGeometry(1.25*scale,7*scale,5),mats.leaf2);leaf.position.set(x+Math.cos(arm*Math.PI/3)*3.2*scale,7.8*scale,z+Math.sin(arm*Math.PI/3)*3.2*scale);leaf.rotation.z=.75;leaf.rotation.x=.55;root.add(leaf)}}
   function lamp(x,z){box(root,x,.35,z,.65,8,.65,mat('#263136'));box(root,x,8.3,z,2.5,.45,2.5,mat('#d9d2bd'));const lampGlass=new THREE.MeshStandardMaterial({color:'#fff0c4',emissive:'#ffbc57',emissiveIntensity:2.4});customMaterials.push(lampGlass);box(root,x,8.3,z,2.2,.48,2.2,lampGlass);const light=new THREE.PointLight('#ffd38a',28,62);light.position.set(x,9,z);root.add(light)}
