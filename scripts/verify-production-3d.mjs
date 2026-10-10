@@ -144,7 +144,7 @@ try {
         locations: world.buildings?.length || 0,
         cityLots: world.cityLots?.length || 0,
         residentialLots: world.houseLots?.length || 0,
-        roadSegments: (world.roadX?.length || 0) + (world.roadY?.length || 0),
+        roadSegments: api?.stats?.roads || 0,
         mappedCityMaterials,
         destinations: {
           abujacar: names.has('ABUJACAR CAR DEALERSHIP'),
