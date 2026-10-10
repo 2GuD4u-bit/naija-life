@@ -101,31 +101,31 @@ defs.forEach(G.world.registerLocation);
 G.world.locationsById=Object.fromEntries(G.world.buildings.map(b=>[b.id,b]));
 G.world.getLocation=function(id){return G.world.locationsById[id]||null};
 G.world.repositionLocation=function(id,patch={}){const b=G.world.getLocation(id);if(!b)return false;const previous={x:b.x,y:b.y,w:b.w,h:b.h,assetBounds:b.assetBounds?{...b.assetBounds}:null,interactionPoint:b.interactionPoint?{...b.interactionPoint}:null},oldCollision=b.collision&&typeof b.collision==='object'?{...b.collision}:null,x=Number.isFinite(patch.x)?patch.x:b.x,y=Number.isFinite(patch.y)?patch.y:b.y,w=Number.isFinite(patch.w)?patch.w:b.w,h=Number.isFinite(patch.h)?patch.h:b.h,dx=x-previous.x,dy=y-previous.y;b.x=x;b.y=y;b.w=w;b.h=h;b.bounds={x,y,w,h};if(oldCollision)b.collision={...oldCollision,x:x+(oldCollision.x-previous.x),y:y+(oldCollision.y-previous.y),w:oldCollision.w*(w/previous.w),h:oldCollision.h*(h/previous.h)};if(id==='abujacar_car_stand'&&G.world.carDealership){const site=G.world.carDealership;site.lot.x+=dx;site.lot.y+=dy;site.showroom.x+=dx;site.showroom.y+=dy;site.workshop.x+=dx;site.workshop.y+=dy;for(const car of site.cars){car.x+=dx;car.y+=dy}b.assetBounds={...site.lot}}else if(previous.assetBounds){b.assetBounds={...previous.assetBounds,x:previous.assetBounds.x+dx,y:previous.assetBounds.y+dy,w:previous.assetBounds.w*(w/previous.w),h:previous.assetBounds.h*(h/previous.h)}}if(patch.rotation!==undefined)b.rotation=Number(patch.rotation)||0;if(patch.scale!==undefined)b.scale=Number(patch.scale)||1;if(patch.interactionPoint)b.interactionPoint={...patch.interactionPoint};else if(id==='abujacar_car_stand'&&G.world.carDealership){const lot=G.world.carDealership.lot,cx=lot.x+lot.w/2,cy=lot.y+lot.h/2,dx=0,dy=-lot.h/2-20,c=Math.cos(b.rotation),s=Math.sin(b.rotation),co=Math.abs(c),si=Math.abs(s),bw=(lot.w*co+lot.h*si)*b.scale,bh=(lot.w*si+lot.h*co)*b.scale;b.interactionPoint={x:cx+(dx*c+dy*s)*b.scale,y:cy+(-dx*s+dy*c)*b.scale};b.assetBounds={x:cx-bw/2,y:cy-bh/2,w:bw,h:bh}}else if(previous.interactionPoint)b.interactionPoint={...previous.interactionPoint,x:previous.interactionPoint.x+dx,y:previous.interactionPoint.y+dy};else b.interactionPoint={x:x+w/2,y:y+h+12};G.world.threeWorld?.refreshLocation?.(b,previous);return b};
-G.world.carDealership={id:'abujacar_car_stand',lot:{x:7920,y:3920,w:720,h:500,gateWidth:84},showroom:{x:8090,y:4010,w:310,d:176},workshop:{x:8460,y:4075,w:112,d:145},cars:[
- {id:'abujacar-showroom-suv-01',name:'Showroom Executive SUV',x:8018,y:3968,color:'#161c22',kind:'suv',interior:true},
- {id:'abujacar-showroom-sedan-01',name:'Showroom Luxury Sedan',x:8076,y:3968,color:'#e5e1d5',kind:'sedan',interior:true},
- {id:'abujacar-showroom-sport-01',name:'Showroom Grand Coupe',x:8134,y:3968,color:'#a52e2c',kind:'sport',interior:true},
- {id:'abujacar-showroom-suv-02',name:'Showroom Premium 4x4',x:8192,y:3968,color:'#384950',kind:'suv',interior:true},
- {id:'abujacar-showroom-sedan-02',name:'Showroom Executive Saloon',x:8250,y:3968,color:'#746954',kind:'sedan',interior:true},
- {id:'abujacar-showroom-suv-03',name:'Showroom Black SUV',x:8308,y:3968,color:'#101519',kind:'suv',interior:true},
- {id:'abujacar-forecourt-01',name:'Forecourt Black SUV',x:7985,y:4140,color:'#12171d',kind:'suv'},
- {id:'abujacar-forecourt-02',name:'Forecourt White SUV',x:8038,y:4140,color:'#e3e1d9',kind:'suv'},
- {id:'abujacar-forecourt-03',name:'Forecourt Graphite SUV',x:8091,y:4140,color:'#394650',kind:'suv'},
- {id:'abujacar-forecourt-04',name:'Forecourt Executive Sedan',x:8144,y:4140,color:'#d4d7d4',kind:'sedan'},
- {id:'abujacar-forecourt-05',name:'Forecourt Sport Coupe',x:8197,y:4140,color:'#a93430',kind:'sport'},
- {id:'abujacar-forecourt-06',name:'Forecourt Midnight SUV',x:8250,y:4140,color:'#17202a',kind:'suv'},
- {id:'abujacar-forecourt-07',name:'Forecourt Pearl SUV',x:8303,y:4140,color:'#e8e3d8',kind:'suv'},
- {id:'abujacar-canopy-01',name:'Canopy Black SUV',x:8370,y:4210,color:'#131920',kind:'suv'},
- {id:'abujacar-canopy-02',name:'Canopy Silver SUV',x:8430,y:4210,color:'#c8ccca',kind:'suv'},
- {id:'abujacar-canopy-03',name:'Canopy Blue SUV',x:8490,y:4210,color:'#304758',kind:'suv'},
- {id:'abujacar-canopy-04',name:'Canopy White Sedan',x:8550,y:4210,color:'#e8e4dc',kind:'sedan'},
- {id:'abujacar-canopy-05',name:'Canopy Grey SUV',x:8370,y:4300,color:'#596165',kind:'suv'},
- {id:'abujacar-canopy-06',name:'Canopy Red Coupe',x:8430,y:4300,color:'#ac372f',kind:'sport'},
- {id:'abujacar-canopy-07',name:'Canopy Black SUV II',x:8490,y:4300,color:'#171b20',kind:'suv'},
- {id:'abujacar-canopy-08',name:'Canopy Champagne Sedan',x:8550,y:4300,color:'#b9ad97',kind:'sedan'},
- {id:'abujacar-customer-01',name:'Customer SUV',x:7990,y:4312,color:'#25313a',kind:'suv'},
- {id:'abujacar-customer-02',name:'Customer Sedan',x:8050,y:4312,color:'#d8d6cf',kind:'sedan'},
- {id:'abujacar-customer-03',name:'Customer SUV II',x:8110,y:4312,color:'#313d45',kind:'suv'}
+G.world.carDealership={id:'abujacar_car_stand',lot:{x:8110,y:3920,w:340,h:280,gateWidth:50},showroom:{x:8210,y:3964,w:140,d:92},workshop:{x:8390,y:3975,w:60,d:70},cars:[
+ {id:'abujacar-showroom-suv-01',name:'Showroom Executive SUV',x:8240,y:3992,color:'#161c22',kind:'suv',interior:true},
+ {id:'abujacar-showroom-sedan-01',name:'Showroom Luxury Sedan',x:8266,y:3992,color:'#e5e1d5',kind:'sedan',interior:true},
+ {id:'abujacar-showroom-sport-01',name:'Showroom Grand Coupe',x:8292,y:3992,color:'#a52e2c',kind:'sport',interior:true},
+ {id:'abujacar-showroom-suv-02',name:'Showroom Premium 4x4',x:8240,y:4022,color:'#384950',kind:'suv',interior:true},
+ {id:'abujacar-showroom-sedan-02',name:'Showroom Executive Saloon',x:8266,y:4022,color:'#746954',kind:'sedan',interior:true},
+ {id:'abujacar-showroom-suv-03',name:'Showroom Black SUV',x:8292,y:4022,color:'#101519',kind:'suv',interior:true},
+ {id:'abujacar-forecourt-01',name:'Forecourt Black SUV',x:8145,y:4068,color:'#12171d',kind:'suv'},
+ {id:'abujacar-forecourt-02',name:'Forecourt White SUV',x:8188,y:4068,color:'#e3e1d9',kind:'suv'},
+ {id:'abujacar-forecourt-03',name:'Forecourt Graphite SUV',x:8231,y:4068,color:'#394650',kind:'suv'},
+ {id:'abujacar-forecourt-04',name:'Forecourt Executive Sedan',x:8274,y:4068,color:'#d4d7d4',kind:'sedan'},
+ {id:'abujacar-forecourt-05',name:'Forecourt Sport Coupe',x:8317,y:4068,color:'#a93430',kind:'sport'},
+ {id:'abujacar-forecourt-06',name:'Forecourt Midnight SUV',x:8360,y:4068,color:'#17202a',kind:'suv'},
+ {id:'abujacar-canopy-01',name:'Canopy Black SUV',x:8138,y:4085,color:'#131920',kind:'suv'},
+ {id:'abujacar-canopy-02',name:'Canopy Silver SUV',x:8162,y:4085,color:'#c8ccca',kind:'suv'},
+ {id:'abujacar-canopy-03',name:'Canopy Blue SUV',x:8138,y:4120,color:'#304758',kind:'suv'},
+ {id:'abujacar-canopy-04',name:'Canopy White Sedan',x:8162,y:4120,color:'#e8e4dc',kind:'sedan'},
+ {id:'abujacar-canopy-05',name:'Canopy Grey SUV',x:8398,y:4085,color:'#596165',kind:'suv'},
+ {id:'abujacar-canopy-06',name:'Canopy Red Coupe',x:8422,y:4085,color:'#ac372f',kind:'sport'},
+ {id:'abujacar-canopy-07',name:'Canopy Black SUV II',x:8398,y:4120,color:'#171b20',kind:'suv'},
+ {id:'abujacar-canopy-08',name:'Canopy Champagne Sedan',x:8422,y:4120,color:'#b9ad97',kind:'sedan'},
+ {id:'abujacar-customer-01',name:'Customer SUV',x:8138,y:4172,color:'#25313a',kind:'suv'},
+ {id:'abujacar-customer-02',name:'Customer Sedan',x:8162,y:4172,color:'#d8d6cf',kind:'sedan'},
+ {id:'abujacar-customer-03',name:'Customer SUV II',x:8398,y:4172,color:'#313d45',kind:'suv'},
+ {id:'abujacar-customer-04',name:'Customer Executive Sedan',x:8422,y:4172,color:'#e8e4dc',kind:'sedan'}
 ]};
 G.world.getLocation('abujacar_car_stand').assetBounds={...G.world.carDealership.lot};
 G.world.lakes=[{id:'jabi-lake',name:'Jabi Lake',x:6380,y:960,w:660,h:540,shore:34,waterfront:true}];
