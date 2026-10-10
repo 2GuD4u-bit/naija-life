@@ -186,13 +186,13 @@ try {
         window.Game.state.minute = 15;
         window.Game.world.threeWorld.render();
       });
-      await page.screenshot({ path: `${screenshotDir}/abuja-city-day.png` });
+      await page.screenshot({ path: `${screenshotDir}/abuja-city-day.png`, timeout: 90000 });
       await page.evaluate(() => {
         window.Game.state.hour = 20;
         window.Game.state.minute = 15;
         window.Game.world.threeWorld.render();
       });
-      await page.screenshot({ path: `${screenshotDir}/abuja-city-night.png` });
+      await page.screenshot({ path: `${screenshotDir}/abuja-city-night.png`, timeout: 90000 });
       await page.evaluate(() => {
         const G = window.Game;
         G.state.inside = null; G.state.vehicle = null; G.ui.panel = null;
