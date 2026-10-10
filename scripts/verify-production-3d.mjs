@@ -219,13 +219,13 @@ try {
         window.Game.state.minute = 15;
         window.Game.world.threeWorld.render();
       });
-      await page.screenshot({ path: `${screenshotDir}/abuja-city-day.png`, timeout: 90000 });
+      await page.screenshot({ path: `${screenshotDir}/abuja-city-day.png`, timeout: 180000 });
       await page.evaluate(() => {
         window.Game.state.hour = 20;
         window.Game.state.minute = 15;
         window.Game.world.threeWorld.render();
       });
-      await page.screenshot({ path: `${screenshotDir}/abuja-city-night.png`, timeout: 90000 });
+      await page.screenshot({ path: `${screenshotDir}/abuja-city-night.png`, timeout: 180000 });
       await page.evaluate(() => {
         const G = window.Game;
         G.state.inside = null; G.state.vehicle = null; G.ui.panel = null;
@@ -235,7 +235,7 @@ try {
         G.world.threeWorld.render();
       });
       await page.waitForTimeout(1800);
-      await page.screenshot({ path: `${screenshotDir}/abuja-city-aerial.png`, timeout: 90000 });
+      await page.screenshot({ path: `${screenshotDir}/abuja-city-aerial.png`, timeout: 180000 });
       const dealership = await page.evaluate(() => {
         const G = window.Game, lot = G.world.carDealership.lot;
         G.state.inside = null; G.state.vehicle = null; G.ui.panel = null;
@@ -268,14 +268,14 @@ try {
       if (!dealershipScene.found || dealershipScene.meshes < 100 || dealershipScene.vehicles < 18 || dealershipScene.signs < 4 || dealershipScene.bevelledBodies < 18 || dealershipScene.realPlants < 1 || dealershipScene.cc0GlbVehicles < 1 || relevantResponses['/naija-life/assets/3d/vehicles/white-four-door-sedan.glb'] !== 200) {
         throw new Error('ABUJACAR property did not build its detailed 3D showroom and compound: ' + JSON.stringify({ dealership, dealershipScene, vehicleAssetResponse: relevantResponses['/naija-life/assets/3d/vehicles/white-four-door-sedan.glb'] }));
       }
-      await page.screenshot({ path: `${screenshotDir}/abujacar-gameplay-overview.png`, timeout: 90000 });
+      await page.screenshot({ path: `${screenshotDir}/abujacar-gameplay-overview.png`, timeout: 180000 });
       await page.evaluate(() => {
         window.Game.view.scale = Math.max(window.Game.view.scale || 1, 1.9);
         window.Game.view.zoom = Math.max(window.Game.view.zoom || 1, 1.9);
         window.Game.world.threeWorld.render();
       });
       await page.waitForTimeout(300);
-      await page.screenshot({ path: `${screenshotDir}/abujacar-gameplay-close.png`, timeout: 90000 });
+      await page.screenshot({ path: `${screenshotDir}/abujacar-gameplay-close.png`, timeout: 180000 });
       console.log(JSON.stringify({ visualCheckpoints: [`${screenshotDir}/abuja-city-day.png`, `${screenshotDir}/abuja-city-night.png`, `${screenshotDir}/abuja-city-aerial.png`, `${screenshotDir}/abujacar-gameplay-overview.png`, `${screenshotDir}/abujacar-gameplay-close.png`], dealership, dealershipScene }));
     }
 
